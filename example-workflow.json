@@ -1,0 +1,141 @@
+{
+  "nodes": [
+    {
+      "id": "trigger-1",
+      "type": "trigger",
+      "position": {
+        "x": 100,
+        "y": 200
+      },
+      "data": {
+        "label": "Webhook Trigger",
+        "description": "Receives incoming webhook",
+        "type": "trigger",
+        "config": {
+          "triggerType": "Webhook"
+        },
+        "status": "idle"
+      }
+    },
+    {
+      "id": "action-1",
+      "type": "action",
+      "position": {
+        "x": 400,
+        "y": 200
+      },
+      "data": {
+        "label": "Fetch User Data",
+        "description": "Get user information from API",
+        "type": "action",
+        "config": {
+          "actionType": "HTTP Request",
+          "endpoint": "https://api.example.com/users"
+        },
+        "status": "idle"
+      }
+    },
+    {
+      "id": "condition-1",
+      "type": "condition",
+      "position": {
+        "x": 700,
+        "y": 200
+      },
+      "data": {
+        "label": "Check Status",
+        "description": "Verify response status",
+        "type": "condition",
+        "config": {
+          "condition": "status === 200"
+        },
+        "status": "idle"
+      }
+    },
+    {
+      "id": "transform-1",
+      "type": "transform",
+      "position": {
+        "x": 1000,
+        "y": 150
+      },
+      "data": {
+        "label": "Format Data",
+        "description": "Transform user data",
+        "type": "transform",
+        "config": {
+          "transformType": "Map Data"
+        },
+        "status": "idle"
+      }
+    },
+    {
+      "id": "action-2",
+      "type": "action",
+      "position": {
+        "x": 1000,
+        "y": 300
+      },
+      "data": {
+        "label": "Send Error Notification",
+        "description": "Alert on failure",
+        "type": "action",
+        "config": {
+          "actionType": "HTTP Request",
+          "endpoint": "https://api.example.com/notify"
+        },
+        "status": "idle"
+      }
+    },
+    {
+      "id": "action-3",
+      "type": "action",
+      "position": {
+        "x": 1300,
+        "y": 150
+      },
+      "data": {
+        "label": "Save to Database",
+        "description": "Store processed data",
+        "type": "action",
+        "config": {
+          "actionType": "Database Query",
+          "endpoint": "postgresql://localhost/mydb"
+        },
+        "status": "idle"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "trigger-1",
+      "target": "action-1",
+      "type": "default"
+    },
+    {
+      "id": "edge-2",
+      "source": "action-1",
+      "target": "condition-1",
+      "type": "default"
+    },
+    {
+      "id": "edge-3",
+      "source": "condition-1",
+      "target": "transform-1",
+      "type": "default"
+    },
+    {
+      "id": "edge-4",
+      "source": "condition-1",
+      "target": "action-2",
+      "type": "default"
+    },
+    {
+      "id": "edge-5",
+      "source": "transform-1",
+      "target": "action-3",
+      "type": "default"
+    }
+  ]
+}
