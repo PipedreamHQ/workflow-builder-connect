@@ -14,6 +14,7 @@ import type { sendSlackMessageStep } from "../../plugins/slack/steps/send-slack-
 import type { conditionStep } from "./condition";
 import type { databaseQueryStep } from "./database-query";
 import type { httpRequestStep } from "./http-request";
+import type { pipedreamActionStep } from "./pipedream-action";
 
 // Step function type
 export type StepFunction = (input: Record<string, unknown>) => Promise<unknown>;
@@ -64,6 +65,10 @@ export const stepRegistry: Record<string, StepFunction> = {
     (
       await import("../../plugins/firecrawl/steps/search/step")
     ).firecrawlSearchStep(input as Parameters<typeof firecrawlSearchStep>[0]),
+  "Pipedream Action": async (input) =>
+    (await import("./pipedream-action")).pipedreamActionStep(
+      input as Parameters<typeof pipedreamActionStep>[0]
+    ),
 };
 
 // Helper to check if a step exists

@@ -18,6 +18,7 @@ import {
   getActionsByCategory,
   getAllIntegrations,
 } from "@/plugins";
+import { PipedreamActionConfig } from "./pipedream-action-config";
 import { SchemaBuilder, type SchemaField } from "./schema-builder";
 
 type ActionConfigProps = {
@@ -201,14 +202,18 @@ function ConditionFields({
 // System actions that don't have plugins
 const SYSTEM_ACTIONS = ["HTTP Request", "Database Query", "Condition"];
 
-// Build category mapping dynamically from plugins + System
+// Pipedream actions (handled specially with connect-react)
+const PIPEDREAM_ACTIONS = ["Pipedream Action"];
+
+// Build category mapping dynamically from plugins + System + Pipedream
 function useCategoryData() {
   return useMemo(() => {
     const pluginCategories = getActionsByCategory();
 
-    // Build category map including System
+    // Build category map including System and Pipedream
     const allCategories: Record<string, string[]> = {
       System: SYSTEM_ACTIONS,
+      Pipedream: PIPEDREAM_ACTIONS,
     };
 
     for (const [category, actions] of Object.entries(pluginCategories)) {
@@ -297,6 +302,12 @@ export function ActionConfig({
                   <span>System</span>
                 </div>
               </SelectItem>
+              <SelectItem value="Pipedream">
+                <div className="flex items-center gap-2">
+                  <IntegrationIcon className="size-4" integration="pipedream" />
+                  <span>Pipedream</span>
+                </div>
+              </SelectItem>
               {integrations.map((integration) => (
                 <SelectItem key={integration.type} value={integration.label}>
                   <div className="flex items-center gap-2">
@@ -361,8 +372,17 @@ export function ActionConfig({
         />
       )}
 
+      {/* Pipedream Action config */}
+      {config?.actionType === "Pipedream Action" && (
+        <PipedreamActionConfig
+          config={config}
+          disabled={disabled}
+          onUpdateConfig={onUpdateConfig}
+        />
+      )}
+
       {/* Plugin actions - dynamic config fields */}
-      {pluginAction && !SYSTEM_ACTIONS.includes(actionType) && (
+      {pluginAction && !SYSTEM_ACTIONS.includes(actionType) && !PIPEDREAM_ACTIONS.includes(actionType) && (
         <pluginAction.configFields
           config={config}
           disabled={disabled}
