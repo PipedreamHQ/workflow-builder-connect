@@ -27,7 +27,20 @@ function VercelIcon({ className }: { className?: string }) {
   );
 }
 
-// Special icons for integrations without plugins (database, vercel, ai-gateway)
+// Pipedream icon component
+function PipedreamIcon({ className }: { className?: string }) {
+  return (
+    <Image
+      alt="Pipedream logo"
+      className={className}
+      height={12}
+      src="/pipedream-icon.svg"
+      width={12}
+    />
+  );
+}
+
+// Special icons for integrations without plugins (database, vercel, ai-gateway, pipedream)
 const SPECIAL_ICONS: Record<
   string,
   React.ComponentType<{ className?: string }>
@@ -35,6 +48,7 @@ const SPECIAL_ICONS: Record<
   database: Database,
   vercel: VercelIcon,
   "ai-gateway": VercelIcon,
+  pipedream: PipedreamIcon,
 };
 
 export function IntegrationIcon({
