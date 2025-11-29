@@ -56,27 +56,6 @@ function FirecrawlIcon({ className }: { className?: string }) {
   );
 }
 
-function PipedreamIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="currentColor"
-      height="12"
-      viewBox="0 0 24 24"
-      width="12"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-        fill="none"
-        stroke="#3ECF8E"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
 
 export function IntegrationIcon({
   integration,
@@ -109,7 +88,15 @@ export function IntegrationIcon({
   }
 
   if (integration === "pipedream") {
-    return <PipedreamIcon className={cn("text-foreground", className)} />;
+    return (
+      <Image
+        alt="Pipedream logo"
+        className={className}
+        height={12}
+        src="/pipedream-icon.svg"
+        width={12}
+      />
+    );
   }
 
   return (

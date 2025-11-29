@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Database,
   Flame,
+  Info,
   Loader2,
   Mail,
   MessageSquare,
@@ -290,7 +291,10 @@ export function ActionGrid({
               }
               disabled={disabled}
             />
-            <span>Include <a href="https://pipedream.com/connect" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Pipedream</a> actions</span>
+            <span>Include Pipedream actions</span>
+            <a href="https://pipedream.com/connect" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+              <Info className="size-3.5" />
+            </a>
           </div>
         </div>
         <div className="relative">
