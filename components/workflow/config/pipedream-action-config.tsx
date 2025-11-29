@@ -11,9 +11,11 @@ import type {
   AppsListRequestSortKey,
   Component,
   ConfiguredProps,
+  DynamicProps,
 } from "@pipedream/sdk";
 import { Loader2, Play } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -32,12 +34,16 @@ const appsOptions: {
 type PipedreamActionConfigProps = {
   config: Record<string, unknown>;
   onUpdateConfig: (key: string, value: string) => void;
+  onUpdateLabel?: (label: string) => void;
+  onUpdateDescription?: (description: string) => void;
   disabled: boolean;
 };
 
 export function PipedreamActionConfig({
   config,
   onUpdateConfig,
+  onUpdateLabel,
+  onUpdateDescription,
   disabled,
 }: PipedreamActionConfigProps) {
   const { data: session } = useSession();
@@ -46,7 +52,14 @@ export function PipedreamActionConfig({
   // Selected app state
   const [selectedApp, setSelectedApp] = useState<App | undefined>(() => {
     const nameSlug = config?.pipedreamApp as string | undefined;
-    return nameSlug ? ({ nameSlug } as App) : undefined;
+    if (!nameSlug) return undefined;
+    return {
+      nameSlug,
+      name: (config?.pipedreamAppName as string) || nameSlug,
+      imgSrc: (config?.pipedreamAppLogo as string) || "",
+      categories: [],
+      featuredWeight: 0,
+    } as App;
   });
 
   // Selected component state
@@ -70,6 +83,13 @@ export function PipedreamActionConfig({
     return (stored as ConfiguredProps) || {};
   });
 
+  // Track latest dynamic props so we can serialize values reliably
+  const [latestDynamicProps, setLatestDynamicProps] = useState<
+    DynamicProps | undefined
+  >();
+  const lastSavedPropsJson = useRef<string>("");
+  const lastSavedComponentKey = useRef<string>("");
+
   // Test execution state
   const [isTesting, setIsTesting] = useState(false);
 
@@ -83,6 +103,8 @@ export function PipedreamActionConfig({
 
       // Sync to workflow state (stringify objects for storage)
       onUpdateConfig("pipedreamApp", app?.nameSlug || "");
+      onUpdateConfig("pipedreamAppName", app?.name || app?.nameSlug || "");
+      onUpdateConfig("pipedreamAppLogo", app?.imgSrc || "");
       onUpdateConfig("pipedreamComponentKey", "");
       onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
     },
@@ -100,15 +122,16 @@ export function PipedreamActionConfig({
       onUpdateConfig("pipedreamComponentKey", component?.key || "");
       onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
 
-      // Update label and description from selected component
-      if (component?.name) {
-        onUpdateConfig("label", component.name);
+      // Update node label to action name and description to app name
+      const appName = selectedApp?.name || (config?.pipedreamAppName as string);
+      if (component?.name && onUpdateLabel) {
+        onUpdateLabel(component.name);
       }
-      if (component?.description) {
-        onUpdateConfig("description", component.description);
+      if (appName && onUpdateDescription) {
+        onUpdateDescription(appName);
       }
     },
-    [onUpdateConfig]
+    [onUpdateConfig, onUpdateLabel, onUpdateDescription, selectedApp?.name, config?.pipedreamAppName]
   );
 
   // Handle test execution
@@ -139,14 +162,81 @@ export function PipedreamActionConfig({
     }
   }, [selectedComponent?.key, configuredProps, externalUserId]);
 
-  // Handle configured props update
-  const handleConfiguredPropsChange = useCallback(
-    (props: ConfiguredProps) => {
-      setConfiguredProps(props);
-      onUpdateConfig("pipedreamConfiguredProps", JSON.stringify(props));
-    },
-    [onUpdateConfig]
-  );
+  // Build a deterministic list of prop names (base + latest dynamic props)
+  const serializedPropNames = useMemo(() => {
+    const names = new Set<string>();
+    selectedComponent?.configurableProps?.forEach((prop) =>
+      names.add(prop.name)
+    );
+    latestDynamicProps?.configurableProps?.forEach((prop) =>
+      names.add(prop.name)
+    );
+    return names;
+  }, [selectedComponent?.configurableProps, latestDynamicProps]);
+
+  // Persist configured props when they change (one-way sync to store)
+  useEffect(() => {
+    if (!selectedComponent?.key) return;
+
+    const props = configuredProps || {};
+    const serializable: Record<string, unknown> = {};
+
+    // Collect every key we can discover
+    const keyCandidates = new Set<string>();
+    Object.keys(props || {}).forEach((name) => keyCandidates.add(name));
+    Object.getOwnPropertyNames(props || {}).forEach((name) =>
+      keyCandidates.add(name)
+    );
+    serializedPropNames.forEach((name) => keyCandidates.add(name));
+    try {
+      Reflect.ownKeys(props || {}).forEach((key) => {
+        if (typeof key === "string") keyCandidates.add(key);
+      });
+    } catch {
+      // ignore
+    }
+
+    // Pull values by key
+    for (const name of keyCandidates) {
+      try {
+        const value = (props as any)?.[name];
+        if (value !== undefined) {
+          serializable[name] = value;
+        }
+      } catch {
+        // ignore individual property read failures
+      }
+    }
+
+    // Break any Proxies before persisting to workflow JSON
+    let plainProps: Record<string, unknown> = serializable;
+    try {
+      plainProps = JSON.parse(JSON.stringify(serializable));
+    } catch {
+      plainProps = { ...serializable };
+    }
+
+    const json = JSON.stringify(plainProps);
+
+    const shouldUpdateProps = json !== lastSavedPropsJson.current;
+    const shouldUpdateKey =
+      selectedComponent.key !== lastSavedComponentKey.current;
+
+    if (shouldUpdateProps) {
+      lastSavedPropsJson.current = json;
+      onUpdateConfig("pipedreamConfiguredProps", json);
+    }
+
+    if (shouldUpdateKey) {
+      lastSavedComponentKey.current = selectedComponent.key;
+      onUpdateConfig("pipedreamComponentKey", selectedComponent.key);
+    }
+  }, [
+    configuredProps,
+    onUpdateConfig,
+    selectedComponent?.key,
+    serializedPropNames,
+  ]);
 
   // Sync initial values from config on mount
   useEffect(() => {
@@ -155,7 +245,13 @@ export function PipedreamActionConfig({
     const storedProps = config?.pipedreamConfiguredProps;
 
     if (nameSlug && !selectedApp) {
-      setSelectedApp({ nameSlug } as App);
+      setSelectedApp({
+        nameSlug,
+        name: (config?.pipedreamAppName as string) || nameSlug,
+        imgSrc: (config?.pipedreamAppLogo as string) || "",
+        categories: [],
+        featuredWeight: 0,
+      } as App);
     }
     if (key && !selectedComponent) {
       setSelectedComponent({ key } as Component);
@@ -203,11 +299,13 @@ export function PipedreamActionConfig({
           <Label className="ml-1">Configure Action</Label>
           <div className="rounded-lg border bg-card p-4">
             <ComponentFormContainer
+              key={selectedComponent.key}
               componentKey={selectedComponent.key}
               configuredProps={configuredProps}
               externalUserId={externalUserId}
               hideOptionalProps={false}
-              onUpdateConfiguredProps={handleConfiguredPropsChange}
+              onUpdateConfiguredProps={setConfiguredProps}
+              onUpdateDynamicProps={setLatestDynamicProps}
             />
           </div>
           {/* Test Button */}

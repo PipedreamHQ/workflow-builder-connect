@@ -8,8 +8,6 @@
 import "server-only";
 
 import { runPipedreamAction } from "@/lib/pipedream/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { getErrorMessage } from "../utils";
 
 type PipedreamActionResult =
@@ -19,14 +17,13 @@ type PipedreamActionResult =
 export async function pipedreamActionStep(input: {
   pipedreamComponentKey: string;
   pipedreamConfiguredProps: Record<string, unknown> | string;
+  externalUserId?: string;
 }): Promise<PipedreamActionResult> {
   "use step";
 
-  // Get the current user's ID to use as externalUserId
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  const externalUserId = session?.user?.id || "anonymous";
+  // Use passed externalUserId, fall back to EXTERNAL_USER_ID env var for Pipedream Connect
+  const externalUserId =
+    input.externalUserId || process.env.EXTERNAL_USER_ID || "anonymous";
 
   const { pipedreamComponentKey, pipedreamConfiguredProps } = input;
 

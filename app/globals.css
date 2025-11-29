@@ -256,8 +256,17 @@
 /* Base menu styling - high z-index and absolute positioning */
 .react-select__menu,
 .pipedream-config [class$="-menu"] {
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   position: absolute !important;
+  background: hsl(var(--card)) !important;
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.35) !important;
+  color: hsl(var(--foreground)) !important;
+  opacity: 1 !important;
+  isolation: isolate;
+  mix-blend-mode: normal !important;
+  transform: translate3d(0, 0, 0) !important;
 }
 
 /* Ensure select containers have proper stacking */
@@ -269,6 +278,21 @@
 /* When dropdown is open, boost the container z-index */
 .pipedream-config [class*="-container"]:has([class$="-menu"]) {
   z-index: 100 !important;
+  isolation: isolate;
+}
+
+/* Ensure menu options inherit the opaque background */
+.pipedream-config [class$="-menu"] * {
+  background: hsl(var(--card)) !important;
+  background-color: hsl(var(--card)) !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Ensure the entire Pipedream config block sits above underlying content */
+.pipedream-config {
+  position: relative;
+  z-index: 20;
 }
 
 /*

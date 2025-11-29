@@ -541,6 +541,33 @@ export function generateWorkflowCode(
     return lines;
   }
 
+  function generatePipedreamActionCode(
+    node: WorkflowNode,
+    indent: string,
+    varName: string
+  ): string[] {
+    const stepInfo = getStepInfo("Pipedream Action");
+    imports.add(
+      `import { ${stepInfo.functionName} } from '${stepInfo.importPath}';`
+    );
+
+    const config = node.data.config || {};
+    const pipedreamComponentKey = (config.pipedreamComponentKey as string) || "";
+    const pipedreamConfiguredProps = config.pipedreamConfiguredProps || "{}";
+
+    // Convert configuredProps to string if it's an object
+    const propsString = typeof pipedreamConfiguredProps === "string"
+      ? pipedreamConfiguredProps
+      : JSON.stringify(pipedreamConfiguredProps);
+
+    return [
+      `${indent}const ${varName} = await ${stepInfo.functionName}({`,
+      `${indent}  pipedreamComponentKey: "${pipedreamComponentKey}",`,
+      `${indent}  pipedreamConfiguredProps: ${propsString},`,
+      `${indent}});`,
+    ];
+  }
+
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Action type routing requires many conditionals
   function generateActionNodeCode(
     node: WorkflowNode,
@@ -645,6 +672,10 @@ export function generateWorkflowCode(
     } else if (actionType === "HTTP Request" || endpoint) {
       lines.push(
         ...wrapActionCall(generateHTTPActionCode(indent, varName, endpoint))
+      );
+    } else if (actionType === "Pipedream Action") {
+      lines.push(
+        ...wrapActionCall(generatePipedreamActionCode(node, indent, varName))
       );
     } else if (label.includes("generate text") && !label.includes("email")) {
       // Fallback: check label but avoid matching "email" in labels

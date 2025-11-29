@@ -16,6 +16,7 @@ const corsHeaders = {
 async function executeWorkflowBackground(
   executionId: string,
   workflowId: string,
+  userId: string,
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
   input: Record<string, unknown>
@@ -37,6 +38,7 @@ async function executeWorkflowBackground(
         triggerInput: input,
         executionId,
         workflowId,
+        userId,
       },
     ]);
 
@@ -114,6 +116,7 @@ export async function POST(
     executeWorkflowBackground(
       execution.id,
       workflowId,
+      workflow.userId,
       workflow.nodes as WorkflowNode[],
       workflow.edges as WorkflowEdge[],
       body

@@ -20,6 +20,7 @@ export type WorkflowExecutionInput = {
   triggerInput?: Record<string, unknown>;
   executionId?: string;
   workflowId?: string; // Used by steps to fetch credentials
+  userId?: string; // Propagated to steps for user-scoped integrations
 };
 
 /**
@@ -32,6 +33,7 @@ async function executeActionStep(input: {
   actionType: string;
   config: Record<string, unknown>;
   outputs: NodeOutputs;
+  externalUserId?: string;
 }) {
   const { actionType, config } = input;
 
@@ -190,6 +192,14 @@ async function executeActionStep(input: {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic step input type
     return await firecrawlSearchStep(stepInput as any);
   }
+  if (actionType === "Pipedream Action") {
+    const { pipedreamActionStep } = await import("./steps/pipedream-action");
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic step input type
+    return await pipedreamActionStep({
+      ...(stepInput as any),
+      externalUserId: input.externalUserId,
+    });
+  }
 
   // Fallback for unknown action types
   return {
@@ -276,13 +286,21 @@ export async function executeWorkflow(input: WorkflowExecutionInput) {
 
   console.log("[Workflow Executor] Starting workflow execution");
 
-  const { nodes, edges, triggerInput = {}, executionId, workflowId } = input;
+  const {
+    nodes,
+    edges,
+    triggerInput = {},
+    executionId,
+    workflowId,
+    userId,
+  } = input;
 
   console.log("[Workflow Executor] Input:", {
     nodeCount: nodes.length,
     edgeCount: edges.length,
     hasExecutionId: !!executionId,
     workflowId: workflowId || "none",
+    userId: userId || "none",
   });
 
   const outputs: NodeOutputs = {};
@@ -502,6 +520,7 @@ export async function executeWorkflow(input: WorkflowExecutionInput) {
           actionType,
           config: processedConfig,
           outputs,
+          externalUserId: userId,
         });
 
         console.log("[Workflow Executor] Step result received:", {

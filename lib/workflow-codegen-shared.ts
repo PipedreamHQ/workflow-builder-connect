@@ -329,6 +329,10 @@ export function getStepInfo(actionType: string): {
         functionName: "firecrawlSearchStep",
         importPath: "./steps/firecrawl",
       },
+      "Pipedream Action": {
+        functionName: "pipedreamActionStep",
+        importPath: "./steps/pipedream-action",
+      },
     };
 
   return (

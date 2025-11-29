@@ -103,8 +103,24 @@ const hasIntegrationConfigured = (config: Record<string, unknown>): boolean =>
   Boolean(config?.integrationId);
 
 // Helper to get provider logo for action type
-const getProviderLogo = (actionType: string) => {
+const getProviderLogo = (
+  actionType: string,
+  config?: Record<string, unknown>
+) => {
   switch (actionType) {
+    case "Pipedream Action": {
+      const logo = (config?.pipedreamAppLogo as string) || "";
+      if (logo) {
+        return (
+          <img
+            alt="App logo"
+            className="size-12 rounded-md object-contain"
+            src={logo}
+          />
+        );
+      }
+      return <IntegrationIcon className="size-12" integration="pipedream" />;
+    }
     case "Send Email":
       return <IntegrationIcon className="size-12" integration="resend" />;
     case "Send Slack Message":
@@ -312,7 +328,7 @@ export const ActionNode = memo(({ data, selected, id }: ActionNodeProps) => {
             base64={(nodeLog.output as { base64: string }).base64}
           />
         ) : (
-          getProviderLogo(actionType)
+          getProviderLogo(actionType, data.config || {})
         )}
         <div className="flex flex-col items-center gap-1 text-center">
           <NodeTitle className="text-base">{displayTitle}</NodeTitle>

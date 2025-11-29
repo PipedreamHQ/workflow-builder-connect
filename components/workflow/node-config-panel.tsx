@@ -583,6 +583,7 @@ export const PanelInner = () => {
                   handleUpdateConfigBatch({
                     actionType: "Pipedream Action",
                     pipedreamApp: app.nameSlug,
+                    pipedreamAppLogo: app.imgSrc || "",
                     pipedreamComponentKey: "",
                     pipedreamConfiguredProps: JSON.stringify({}),
                   });
@@ -606,6 +607,8 @@ export const PanelInner = () => {
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
                 onUpdateConfig={handleUpdateConfig}
+                onUpdateLabel={handleUpdateLabel}
+                onUpdateDescription={handleUpdateDescription}
               />
             ) : null}
 

@@ -26,6 +26,8 @@ import { SchemaBuilder, type SchemaField } from "./schema-builder";
 type ActionConfigProps = {
   config: Record<string, unknown>;
   onUpdateConfig: (key: string, value: string) => void;
+  onUpdateLabel?: (label: string) => void;
+  onUpdateDescription?: (description: string) => void;
   disabled: boolean;
 };
 
@@ -654,6 +656,8 @@ const getCategoryForAction = (actionType: string): ActionCategory | null => {
 export function ActionConfig({
   config,
   onUpdateConfig,
+  onUpdateLabel,
+  onUpdateDescription,
   disabled,
 }: ActionConfigProps) {
   const [_workflowId] = useAtom(currentWorkflowIdAtom);
@@ -875,6 +879,8 @@ export function ActionConfig({
           config={config}
           disabled={disabled}
           onUpdateConfig={onUpdateConfig}
+          onUpdateLabel={onUpdateLabel}
+          onUpdateDescription={onUpdateDescription}
         />
       )}
     </>
