@@ -254,19 +254,42 @@
  */
 
 /* Base menu styling - high z-index and absolute positioning */
+/* Target both react-select prefixed classes AND emotion-generated classes */
 .react-select__menu,
-.pipedream-config [class$="-menu"] {
+[class*="-menu"]:not([class*="-menu-"]):not(.pipedream-config),
+.pipedream-config [class$="-menu"],
+.pipedream-config [class*="__menu"] {
   z-index: 99999 !important;
-  position: absolute !important;
-  background: hsl(var(--card)) !important;
-  background-color: hsl(var(--card)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: var(--card) !important;
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
   box-shadow: 0 20px 60px rgba(2, 6, 23, 0.35) !important;
-  color: hsl(var(--foreground)) !important;
+  color: var(--foreground) !important;
   opacity: 1 !important;
-  isolation: isolate;
-  mix-blend-mode: normal !important;
-  transform: translate3d(0, 0, 0) !important;
+}
+
+.pipedream-config [class$="-menu-list"],
+.pipedream-config [class$="-option"],
+.pipedream-config [class*="__menu-list"],
+.pipedream-config [class*="__option"],
+.react-select__menu-list,
+.react-select__option {
+  background: var(--card) !important;
+  background-color: var(--card) !important;
+}
+
+/* Hover effects for options */
+.react-select__option:hover,
+.react-select__option--is-focused,
+[class$="-option"]:hover {
+  background: var(--accent) !important;
+  background-color: var(--accent) !important;
+}
+
+.react-select__option--is-selected {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
 }
 
 /* Ensure select containers have proper stacking */
@@ -281,18 +304,40 @@
   isolation: isolate;
 }
 
-/* Ensure menu options inherit the opaque background */
-.pipedream-config [class$="-menu"] * {
-  background: hsl(var(--card)) !important;
-  background-color: hsl(var(--card)) !important;
+/* Ensure menu options inherit the opaque background - but not with wildcard to preserve hover */
+.react-select__menu,
+.react-select__menu-list {
+  background: var(--card) !important;
+  background-color: var(--card) !important;
   opacity: 1 !important;
-  mix-blend-mode: normal !important;
+}
+
+/* If a menu portal is used, ensure it sits on top */
+.pipedream-config [class$="-menu-portal"],
+.react-select__menu-portal {
+  z-index: 99999 !important;
+}
+
+.pipedream-config [class$="-menu-portal"] [class$="-menu"],
+.react-select__menu-portal .react-select__menu {
+  pointer-events: auto !important;
 }
 
 /* Ensure the entire Pipedream config block sits above underlying content */
 .pipedream-config {
   position: relative;
   z-index: 20;
+}
+
+/* When any dropdown is open, paint an overlay to hide underlying text */
+.pipedream-config:has([class$="-menu"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--card) !important;
+  opacity: 1 !important;
+  z-index: 9990;
+  pointer-events: none;
 }
 
 /*
@@ -321,23 +366,23 @@
 /* Style menus for dark mode */
 .dark .react-select__menu,
 .dark .pipedream-config [class$="-menu"] {
-  background: hsl(var(--card)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
 }
 
 .dark .react-select__option,
 .dark .pipedream-config [class$="-option"] {
-  color: hsl(var(--foreground)) !important;
-  background: hsl(var(--card)) !important;
+  color: var(--foreground) !important;
+  background: var(--card) !important;
 }
 
 .dark .react-select__option--is-focused,
 .dark .pipedream-config [class$="-option"]:hover {
-  background: hsl(var(--accent)) !important;
+  background: var(--accent) !important;
 }
 
 .dark .react-select__option--is-selected {
-  background: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
 }

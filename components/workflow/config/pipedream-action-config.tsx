@@ -14,8 +14,7 @@ import type {
   DynamicProps,
 } from "@pipedream/sdk";
 import { Loader2, Play } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -92,6 +91,7 @@ export function PipedreamActionConfig({
 
   // Test execution state
   const [isTesting, setIsTesting] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Handle app selection
   const handleAppChange = useCallback(
@@ -268,7 +268,7 @@ export function PipedreamActionConfig({
   }, []);
 
   return (
-    <div className="pipedream-config space-y-4">
+    <div className="pipedream-config space-y-4" ref={containerRef}>
 
       {/* App Selection */}
       <div className="space-y-2">

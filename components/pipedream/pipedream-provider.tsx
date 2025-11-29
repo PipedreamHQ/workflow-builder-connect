@@ -71,7 +71,21 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
 
   return (
     <FrontendClientProvider client={client}>
-      <CustomizeProvider theme={pipedreamTheme}>{children}</CustomizeProvider>
+      <CustomizeProvider
+        theme={pipedreamTheme}
+        select={{
+          getProps: (_name, baseProps) => ({
+            ...baseProps,
+            menuPortalTarget:
+              typeof document !== "undefined" ? document.body : undefined,
+            menuPosition: "fixed",
+            menuPlacement: "auto",
+            menuShouldBlockScroll: false,
+          }),
+        }}
+      >
+        {children}
+      </CustomizeProvider>
     </FrontendClientProvider>
   );
 }
