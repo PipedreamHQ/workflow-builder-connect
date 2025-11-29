@@ -689,9 +689,14 @@ export const PanelInner = () => {
                     actionType: "Pipedream Action",
                     pipedreamApp: app.nameSlug,
                     pipedreamAppName: app.name,
-                    pipedreamAppLogo: app.imgSrc || `https://pipedream.com/s.v0/${app.id}/logo/48`,
+                    pipedreamAppLogo:
+                      app.imgSrc ||
+                      `https://pipedream.com/s.v0/${app.id}/logo/48`,
                   };
-                  updateNodeData({ id: selectedNode.id, data: { config: newConfig } });
+                  updateNodeData({
+                    id: selectedNode.id,
+                    data: { config: newConfig },
+                  });
                 }}
               />
             ) : null}
@@ -702,8 +707,8 @@ export const PanelInner = () => {
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
                 onUpdateConfig={handleUpdateConfig}
-                onUpdateLabel={handleUpdateLabel}
                 onUpdateDescription={handleUpdateDescription}
+                onUpdateLabel={handleUpdateLabel}
               />
             ) : null}
 

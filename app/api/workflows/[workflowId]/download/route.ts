@@ -19,6 +19,30 @@ const NON_ALPHANUMERIC_REGEX = /[^a-zA-Z0-9\s]/g;
 const WHITESPACE_SPLIT_REGEX = /\s+/;
 const TEMPLATE_EXPORT_REGEX = /export default `([\s\S]*)`/;
 
+const ACTION_DEPENDENCIES: Record<string, Record<string, string>> = {
+  "Send Email": { resend: "^6.4.0" },
+  "Pipedream Action": { "@pipedream/sdk": "^2.3.0" },
+  "Create Ticket": { "@linear/sdk": "^63.2.0" },
+  "Find Issues": { "@linear/sdk": "^63.2.0" },
+  "Send Slack Message": { "@slack/web-api": "^7.12.0" },
+  "Create Chat": { "v0-sdk": "^0.15.1" },
+  "Send Message": { "v0-sdk": "^0.15.1" },
+  "Generate Text": {
+    ai: "^5.0.86",
+    openai: "^6.8.0",
+    "@google/genai": "^1.28.0",
+    zod: "^4.1.12",
+  },
+  "Generate Image": {
+    ai: "^5.0.86",
+    openai: "^6.8.0",
+    "@google/genai": "^1.28.0",
+    zod: "^4.1.12",
+  },
+  Scrape: { "@mendable/firecrawl-js": "^4.6.2" },
+  Search: { "@mendable/firecrawl-js": "^4.6.2" },
+};
+
 /**
  * Recursively read all files from a directory
  */
@@ -144,24 +168,11 @@ function getIntegrationDependencies(
   const deps: Record<string, string> = {};
 
   for (const node of nodes) {
-    const actionType = node.data.config?.actionType as string;
+    const actionType = node.data.config?.actionType as string | undefined;
+    const actionDeps = actionType ? ACTION_DEPENDENCIES[actionType] : undefined;
 
-    if (actionType === "Send Email") {
-      deps.resend = "^6.4.0";
-    } else if (actionType === "Create Ticket" || actionType === "Find Issues") {
-      deps["@linear/sdk"] = "^63.2.0";
-    } else if (actionType === "Send Slack Message") {
-      deps["@slack/web-api"] = "^7.12.0";
-    } else if (
-      actionType === "Generate Text" ||
-      actionType === "Generate Image"
-    ) {
-      deps.ai = "^5.0.86";
-      deps.openai = "^6.8.0";
-      deps["@google/genai"] = "^1.28.0";
-      deps.zod = "^4.1.12";
-    } else if (actionType === "Scrape" || actionType === "Search") {
-      deps["@mendable/firecrawl-js"] = "^4.6.2";
+    if (actionDeps) {
+      Object.assign(deps, actionDeps);
     }
   }
 

@@ -382,19 +382,21 @@ export function ActionConfig({
           config={config}
           disabled={disabled}
           onUpdateConfig={onUpdateConfig}
-          onUpdateLabel={onUpdateLabel}
           onUpdateDescription={onUpdateDescription}
+          onUpdateLabel={onUpdateLabel}
         />
       )}
 
       {/* Plugin actions - dynamic config fields */}
-      {pluginAction && !SYSTEM_ACTIONS.includes(actionType) && !PIPEDREAM_ACTIONS.includes(actionType) && (
-        <pluginAction.configFields
-          config={config}
-          disabled={disabled}
-          onUpdateConfig={handlePluginUpdateConfig}
-        />
-      )}
+      {pluginAction &&
+        !SYSTEM_ACTIONS.includes(actionType) &&
+        !PIPEDREAM_ACTIONS.includes(actionType) && (
+          <pluginAction.configFields
+            config={config}
+            disabled={disabled}
+            onUpdateConfig={handlePluginUpdateConfig}
+          />
+        )}
     </>
   );
 }

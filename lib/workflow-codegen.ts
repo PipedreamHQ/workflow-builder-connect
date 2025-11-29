@@ -603,13 +603,15 @@ export function generateWorkflowCode(
     );
 
     const config = node.data.config || {};
-    const pipedreamComponentKey = (config.pipedreamComponentKey as string) || "";
+    const pipedreamComponentKey =
+      (config.pipedreamComponentKey as string) || "";
     const pipedreamConfiguredProps = config.pipedreamConfiguredProps || "{}";
 
     // Convert configuredProps to string if it's an object
-    const propsString = typeof pipedreamConfiguredProps === "string"
-      ? pipedreamConfiguredProps
-      : JSON.stringify(pipedreamConfiguredProps);
+    const propsString =
+      typeof pipedreamConfiguredProps === "string"
+        ? pipedreamConfiguredProps
+        : JSON.stringify(pipedreamConfiguredProps);
 
     return [
       `${indent}const ${varName} = await ${stepInfo.functionName}({`,

@@ -236,9 +236,11 @@ async function executeActionStep(input: {
   }
   if (actionType === "Pipedream Action") {
     const { pipedreamActionStep } = await import("./steps/pipedream-action");
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic step input type
     return await pipedreamActionStep({
-      ...(stepInput as any),
+      ...(stepInput as {
+        pipedreamComponentKey: string;
+        pipedreamConfiguredProps: string | Record<string, unknown>;
+      }),
       externalUserId: input.externalUserId,
     });
   }
@@ -335,7 +337,14 @@ export async function executeWorkflow(input: WorkflowExecutionInput) {
 
   console.log("[Workflow Executor] Starting workflow execution");
 
-  const { nodes, edges, triggerInput = {}, executionId, workflowId, userId } = input;
+  const {
+    nodes,
+    edges,
+    triggerInput = {},
+    executionId,
+    workflowId,
+    userId,
+  } = input;
 
   console.log("[Workflow Executor] Input:", {
     nodeCount: nodes.length,

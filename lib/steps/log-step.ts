@@ -6,13 +6,17 @@ import "server-only";
 
 import { redactSensitiveData } from "../utils/redact";
 
+const TRAILING_SLASH_REGEX = /\/$/;
+
 const getBaseUrl = (): string => {
   const explicit =
     process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_SITE_URL;
-  if (explicit) return explicit.replace(/\/$/, "");
+  if (explicit) {
+    return explicit.replace(TRAILING_SLASH_REGEX, "");
+  }
 
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
+    return `https://${process.env.VERCEL_URL.replace(TRAILING_SLASH_REGEX, "")}`;
   }
 
   // Local/dev fallback: honor PORT if the dev server is running on a non-default port

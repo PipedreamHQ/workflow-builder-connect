@@ -17,6 +17,7 @@ import {
   Ticket,
   Zap,
 } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { IntegrationIcon } from "@/components/ui/integration-icon";
@@ -166,6 +167,7 @@ type ActionGridProps = {
   disabled?: boolean;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex UI component with multiple states
 export function ActionGrid({
   onSelectAction,
   onSelectPipedreamApp,
@@ -195,7 +197,11 @@ export function ActionGrid({
     isLoadingMore,
   } = useApps(
     debouncedFilter.length >= 2
-      ? { q: debouncedFilter, sortKey: "featured_weight", sortDirection: "desc" }
+      ? {
+          q: debouncedFilter,
+          sortKey: "featured_weight",
+          sortDirection: "desc",
+        }
       : { sortKey: "featured_weight", sortDirection: "desc" }
   );
 
@@ -259,14 +265,12 @@ export function ActionGrid({
         }}
         type="button"
       >
-        <img
+        <Image
           alt={app.name}
           className="size-8 rounded"
+          height={32}
           src={`https://pipedream.com/s.v0/${app.id}/logo/48`}
-          onError={(e) => {
-            // Fallback to Pipedream icon on error
-            e.currentTarget.style.display = "none";
-          }}
+          width={32}
         />
         <p className="line-clamp-2 text-center font-medium text-sm">
           {app.name}
@@ -282,17 +286,22 @@ export function ActionGrid({
           <Label className="ml-1 font-semibold" htmlFor="action-filter">
             Search Actions
           </Label>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+          <div className="flex items-center gap-2 font-medium text-muted-foreground text-xs">
             <InlineSwitch
               aria-label="Include Pipedream actions"
               checked={actionFilterMode === "all"}
+              disabled={disabled}
               onChange={(checked) =>
                 setActionFilterMode(checked ? "all" : "vercel")
               }
-              disabled={disabled}
             />
             <span>Include Pipedream actions</span>
-            <a href="https://pipedream.com/connect" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+            <a
+              className="text-muted-foreground hover:text-foreground"
+              href="https://pipedream.com/connect"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
               <Info className="size-3.5" />
             </a>
           </div>
@@ -309,7 +318,6 @@ export function ActionGrid({
           />
         </div>
       </div>
-
 
       {/* Vercel Actions Section - Expandable */}
       {hasVercelResults && (
@@ -358,15 +366,17 @@ export function ActionGrid({
           </button>
           {pipedreamExpanded && (
             <>
-              {hasPipedreamResults ? (
+              {hasPipedreamResults && (
                 <div className="grid grid-cols-2 gap-2">
                   {pipedreamApps.map(renderPipedreamAppButton)}
                 </div>
-              ) : isPipedreamLoading ? (
+              )}
+              {!hasPipedreamResults && isPipedreamLoading && (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="size-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : (
+              )}
+              {!(hasPipedreamResults || isPipedreamLoading) && (
                 <button
                   className={cn(
                     "flex flex-col items-center justify-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:border-primary hover:bg-accent",
@@ -404,7 +414,7 @@ export function ActionGrid({
         </div>
       )}
 
-      {!hasResults && !isPipedreamLoading && (
+      {!(hasResults || isPipedreamLoading) && (
         <p className="py-8 text-center text-muted-foreground text-sm">
           No actions found
         </p>

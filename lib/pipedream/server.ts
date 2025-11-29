@@ -1,9 +1,9 @@
 "use server";
 
 import {
+  type ConfiguredProps,
   PipedreamClient,
   ProjectEnvironment,
-  type ConfiguredProps,
 } from "@pipedream/sdk";
 
 const {
@@ -27,20 +27,26 @@ const getProjectEnvironment = (): ProjectEnvironment => {
 };
 
 // Create backend client (only if credentials are available)
-const client = isPipedreamConfigured
-  ? new PipedreamClient({
-      clientId: PIPEDREAM_CLIENT_ID!,
-      clientSecret: PIPEDREAM_CLIENT_SECRET!,
-      projectId: PIPEDREAM_PROJECT_ID!,
-      projectEnvironment: getProjectEnvironment(),
-    })
-  : null;
+const client =
+  isPipedreamConfigured &&
+  PIPEDREAM_CLIENT_ID &&
+  PIPEDREAM_CLIENT_SECRET &&
+  PIPEDREAM_PROJECT_ID
+    ? new PipedreamClient({
+        clientId: PIPEDREAM_CLIENT_ID,
+        clientSecret: PIPEDREAM_CLIENT_SECRET,
+        projectId: PIPEDREAM_PROJECT_ID,
+        projectEnvironment: getProjectEnvironment(),
+      })
+    : null;
 
 /**
  * Create a connect token for frontend SDK authentication.
  * Called by the frontend client's tokenCallback.
  */
-export async function serverConnectTokenCreate(opts: { externalUserId: string }) {
+export async function serverConnectTokenCreate(opts: {
+  externalUserId: string;
+}) {
   if (!client) {
     throw new Error(
       "Pipedream is not configured. Please add PIPEDREAM_CLIENT_ID, PIPEDREAM_CLIENT_SECRET, and PIPEDREAM_PROJECT_ID environment variables."
@@ -74,7 +80,7 @@ export async function runPipedreamAction(opts: {
     throw new Error("Pipedream is not configured.");
   }
 
-  return client.actions.run({
+  return await client.actions.run({
     id: opts.componentKey,
     externalUserId: opts.externalUserId,
     configuredProps: opts.configuredProps,
@@ -84,6 +90,6 @@ export async function runPipedreamAction(opts: {
 /**
  * Check if Pipedream is configured (has required env vars).
  */
-export async function isPipedreamEnabled() {
+export function isPipedreamEnabled() {
   return isPipedreamConfigured;
 }

@@ -121,7 +121,10 @@ const hasIntegrationConfigured = (config: Record<string, unknown>): boolean =>
   Boolean(config?.integrationId);
 
 // Helper to get provider logo for action type
-const getProviderLogo = (actionType: string, config?: Record<string, unknown>) => {
+const getProviderLogo = (
+  actionType: string,
+  config?: Record<string, unknown>
+) => {
   switch (actionType) {
     case "Send Email":
       return <IntegrationIcon className="size-12" integration="resend" />;

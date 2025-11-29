@@ -298,7 +298,6 @@
 }
 
 /* Ensure select containers have proper stacking */
-.pipedream-config .react-select-container,
 .pipedream-config [class*="-container"] {
   position: relative;
   width: 100%;
@@ -334,23 +333,15 @@
 }
 
 /* Pipedream submit button: primary styling fallback */
-.pipedream-config button[type="submit"],
-.pipedream-config [class*="controlSubmit"] {
+.pipedream-config button[type="submit"] {
   background: hsl(var(--primary)) !important;
   color: hsl(var(--primary-foreground)) !important;
   border: 1px solid hsl(var(--primary)) !important;
   border-radius: 0.5rem !important;
   height: 2.5rem !important;
 }
-.pipedream-config button[type="submit"]:hover,
-.pipedream-config [class*="controlSubmit"]:hover {
+.pipedream-config button[type="submit"]:hover {
   background: hsl(var(--primary) / 0.9) !important;
-}
-
-/* Fix boolean field grid layout - tighten checkbox spacing */
-.pipedream-config .pd-field:has(input[type="checkbox"]) {
-  grid-template-columns: auto 1fr !important;
-  gap: 0.25rem 0.5rem !important;
 }
 
 /* Reset all checkbox margins in pipedream forms */
@@ -390,7 +381,8 @@
 }
 
 .react-select__menu-portal .react-select__option--is-selected:hover,
-.react-select__menu-portal .react-select__option--is-selected.react-select__option--is-focused {
+.react-select__menu-portal
+  .react-select__option--is-selected.react-select__option--is-focused {
   background: var(--accent) !important;
   color: var(--foreground) !important;
 }
@@ -417,11 +409,6 @@
  * temporarily remove overflow clipping from all ancestor containers.
  * This uses the :has() selector to detect when a menu is open.
  */
-
-/* Target the specific scrollable container by class name */
-.node-config-scroll:has([class$="-menu"]) {
-  overflow: visible !important;
-}
 
 /* Also catch overflow-y-auto and overflow-hidden classes */
 .overflow-y-auto:has([class$="-menu"]),

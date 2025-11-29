@@ -1,11 +1,17 @@
 "use client";
 
+import {
+  CustomizeProvider,
+  FrontendClientProvider,
+} from "@pipedream/connect-react";
 import { createFrontendClient } from "@pipedream/sdk/browser";
 import {
-  FrontendClientProvider,
-  CustomizeProvider,
-} from "@pipedream/connect-react";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useSession } from "@/lib/auth-client";
 import { serverConnectTokenCreate } from "@/lib/pipedream/server";
 import { cn } from "@/lib/utils";
@@ -88,49 +94,58 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
 
   // Generate session-scoped ID on client side only (to avoid hydration mismatch)
   useEffect(() => {
-    if (!envOverride && !authenticatedUserId) {
+    if (!(envOverride || authenticatedUserId)) {
       setSessionId(getAnonymousUserId());
     }
   }, [envOverride, authenticatedUserId]);
 
-  const externalUserId = envOverride || authenticatedUserId || sessionId || "anonymous";
+  const externalUserId =
+    envOverride || authenticatedUserId || sessionId || "anonymous";
 
   // Log the external user ID for debugging
   useEffect(() => {
     if (externalUserId && externalUserId !== "anonymous") {
-      const source = envOverride
-        ? "env override"
-        : authenticatedUserId
-          ? "authenticated user"
-          : "session UUID";
-      console.log("[Pipedream] External User ID:", externalUserId, `(${source})`);
+      let source: string;
+      if (envOverride) {
+        source = "env override";
+      } else if (authenticatedUserId) {
+        source = "authenticated user";
+      } else {
+        source = "session UUID";
+      }
+      console.log(
+        "[Pipedream] External User ID:",
+        externalUserId,
+        `(${source})`
+      );
     }
   }, [externalUserId, envOverride, authenticatedUserId]);
 
   // Token callback that calls our server action
   const tokenCallback = useCallback(
-    async ({ externalUserId: userId }: { externalUserId: string }) => {
-      return serverConnectTokenCreate({ externalUserId: userId });
-    },
+    async ({ externalUserId: userId }: { externalUserId: string }) =>
+      serverConnectTokenCreate({ externalUserId: userId }),
     []
   );
 
-  const client = useMemo(() => {
-    return createFrontendClient({
-      externalUserId,
-      tokenCallback,
-    });
-  }, [externalUserId, tokenCallback]);
+  const client = useMemo(
+    () =>
+      createFrontendClient({
+        externalUserId,
+        tokenCallback,
+      }),
+    [externalUserId, tokenCallback]
+  );
 
   return (
     <FrontendClientProvider client={client}>
       <CustomizeProvider
-        theme={pipedreamTheme}
         classNames={{
           controlSubmit: ({ form }) =>
             cn(
-              "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90",
-              form?.submitting && "opacity-70 cursor-not-allowed hover:bg-primary"
+              "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm shadow transition-colors hover:bg-primary/90",
+              form?.submitting &&
+                "cursor-not-allowed opacity-70 hover:bg-primary"
             ),
         }}
         styles={{
@@ -140,6 +155,7 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
             borderColor: "hsl(var(--primary))",
           },
         }}
+        theme={pipedreamTheme}
       >
         {children}
       </CustomizeProvider>

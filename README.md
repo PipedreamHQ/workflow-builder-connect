@@ -1,6 +1,6 @@
-# AI Workflow Builder Template
+# AI Workflow Builder + Pipedream Connect
 
-A template for building your own AI-driven workflow automation platform. Built on top of Workflow DevKit, this template provides a complete visual workflow builder with real integrations and code generation capabilities.
+This fork shows how to extend the template with [Pipedream Connect](https://pipedream.com/connect) so you can add 10,000+ actions and triggers from 3,000+ apps. Built on top of Workflow DevKit, it provides a complete visual workflow builder with real integrations and code generation capabilities. Refer to Pipedream's docs [here](https://pipedream.com/docs/connect).
 
 ![AI Workflow Builder Screenshot](screenshot.png)
 
@@ -35,6 +35,7 @@ You can deploy your own version of the workflow builder to Vercel with one click
 - Node.js 18+
 - PostgreSQL database
 - pnpm package manager
+- Pipedream Connect credentials (client ID, client secret, project ID). See the prerequisites called out in https://github.com/PipedreamHQ/pipedream/pull/19326 for how to obtain these.
 
 ### Environment Variables
 
