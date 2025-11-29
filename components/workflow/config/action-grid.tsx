@@ -270,6 +270,7 @@ export function ActionGrid({
           className="size-8 rounded"
           height={32}
           src={`https://pipedream.com/s.v0/${app.id}/logo/48`}
+          unoptimized
           width={32}
         />
         <p className="line-clamp-2 text-center font-medium text-sm">

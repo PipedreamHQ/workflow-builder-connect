@@ -298,6 +298,7 @@
 }
 
 /* Ensure select containers have proper stacking */
+.pipedream-config .react-select-container,
 .pipedream-config [class*="-container"] {
   position: relative;
   width: 100%;
@@ -333,15 +334,23 @@
 }
 
 /* Pipedream submit button: primary styling fallback */
-.pipedream-config button[type="submit"] {
+.pipedream-config button[type="submit"],
+.pipedream-config [class*="controlSubmit"] {
   background: hsl(var(--primary)) !important;
   color: hsl(var(--primary-foreground)) !important;
   border: 1px solid hsl(var(--primary)) !important;
   border-radius: 0.5rem !important;
   height: 2.5rem !important;
 }
-.pipedream-config button[type="submit"]:hover {
+.pipedream-config button[type="submit"]:hover,
+.pipedream-config [class*="controlSubmit"]:hover {
   background: hsl(var(--primary) / 0.9) !important;
+}
+
+/* Fix boolean field grid layout - tighten checkbox spacing */
+.pipedream-config .pd-field:has(input[type="checkbox"]) {
+  grid-template-columns: auto 1fr !important;
+  gap: 0.25rem 0.5rem !important;
 }
 
 /* Reset all checkbox margins in pipedream forms */

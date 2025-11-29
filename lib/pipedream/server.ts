@@ -89,7 +89,8 @@ export async function runPipedreamAction(opts: {
 
 /**
  * Check if Pipedream is configured (has required env vars).
+ * Exported as async to satisfy Next.js server action constraints.
  */
-export function isPipedreamEnabled() {
+export async function isPipedreamEnabled() {
   return isPipedreamConfigured;
 }

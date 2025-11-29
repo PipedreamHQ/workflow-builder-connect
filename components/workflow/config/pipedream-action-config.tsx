@@ -4,8 +4,6 @@ import {
   ComponentFormContainer,
   SelectApp,
   SelectComponent,
-  useAccounts,
-  useComponents,
 } from "@pipedream/connect-react";
 import type {
   App,
@@ -22,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useSession } from "@/lib/auth-client";
 import { runPipedreamAction } from "@/lib/pipedream/server";
+import Image from "next/image";
 
 // Sort apps by featured weight descending (most popular first)
 const appsOptions: {
@@ -48,41 +47,12 @@ export function PipedreamActionConfig({
   disabled,
 }: PipedreamActionConfigProps) {
   const { data: session } = useSession();
-
-  // Get external user ID with same logic as PipedreamProvider
-  // Priority: env override > authenticated user > session UUID
-  const getExternalUserId = useCallback(() => {
-    const envOverride = process.env.NEXT_PUBLIC_EXTERNAL_USER_ID;
-    if (envOverride) {
-      return envOverride;
-    }
-    // Only use session user ID if authenticated (not anonymous)
-    if (session?.user?.id && !session?.user?.isAnonymous) {
-      return session.user.id;
-    }
-    // Get from sessionStorage (set by PipedreamProvider)
-    if (typeof window !== "undefined") {
-      const stored = sessionStorage.getItem("pipedream_anonymous_user_id");
-      if (stored) {
-        return stored;
-      }
-    }
-    return "anonymous";
-  }, [session?.user?.id, session?.user?.isAnonymous]);
-
-  const externalUserId = getExternalUserId();
-
-  // Track which external user ID was used to configure props
-  const storedExternalUserId = config?.pipedreamExternalUserId as
-    | string
-    | undefined;
+  const externalUserId = session?.user?.id || "anonymous";
 
   // Selected app state
   const [selectedApp, setSelectedApp] = useState<App | undefined>(() => {
     const nameSlug = config?.pipedreamApp as string | undefined;
-    if (!nameSlug) {
-      return;
-    }
+    if (!nameSlug) return undefined;
     return {
       nameSlug,
       name: (config?.pipedreamAppName as string) || nameSlug,
@@ -97,44 +67,21 @@ export function PipedreamActionConfig({
     Component | undefined
   >(() => {
     const key = config?.pipedreamComponentKey as string | undefined;
-    const name = config?.pipedreamComponentName as string | undefined;
-    return key ? ({ key, name: name || key } as Component) : undefined;
+    return key ? ({ key } as Component) : undefined;
   });
 
   // Configured props state (parse from JSON string if stored)
-  // Only restore props if the external user ID matches (props are user-specific)
-  const [configuredProps, setConfiguredProps] = useState<ConfiguredProps>(
-    () => {
-      // Check if the stored props belong to the current user
-      const storedUserId = config?.pipedreamExternalUserId as
-        | string
-        | undefined;
-      const currentUserId = getExternalUserId();
-
-      // If there's a stored user ID and it doesn't match current user, don't restore props
-      if (
-        storedUserId &&
-        currentUserId !== "anonymous" &&
-        storedUserId !== currentUserId
-      ) {
-        console.log("[Pipedream] Skipping props restore - user ID mismatch", {
-          stored: storedUserId,
-          current: currentUserId,
-        });
+  const [configuredProps, setConfiguredProps] = useState<ConfiguredProps>(() => {
+    const stored = config?.pipedreamConfiguredProps;
+    if (typeof stored === "string" && stored) {
+      try {
+        return JSON.parse(stored) as ConfiguredProps;
+      } catch {
         return {};
       }
-
-      const stored = config?.pipedreamConfiguredProps;
-      if (typeof stored === "string" && stored) {
-        try {
-          return JSON.parse(stored) as ConfiguredProps;
-        } catch {
-          return {};
-        }
-      }
-      return (stored as ConfiguredProps) || {};
     }
-  );
+    return (stored as ConfiguredProps) || {};
+  });
 
   // Track latest dynamic props so we can serialize values reliably
   const [latestDynamicProps, setLatestDynamicProps] = useState<
@@ -146,92 +93,6 @@ export function PipedreamActionConfig({
   // Test execution state
   const [isTesting, setIsTesting] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Get action count for selected app
-  const { components: actionsForApp } = useComponents({
-    app: selectedApp?.nameSlug,
-    componentType: "action",
-  });
-  const actionCount = actionsForApp?.length ?? 0;
-
-  // Check if account is connected for the selected app
-  const { accounts: connectedAccounts, isLoading: isLoadingAccounts } =
-    useAccounts({
-      app: selectedApp?.nameSlug,
-      external_user_id:
-        externalUserId !== "anonymous" ? externalUserId : undefined,
-    });
-  const hasConnectedAccount = connectedAccounts.length > 0;
-
-  // Clear configured props if no account is connected but props exist
-  // This handles the case where props were saved with a different user's account
-  useEffect(() => {
-    if (
-      selectedApp?.nameSlug &&
-      !isLoadingAccounts &&
-      !hasConnectedAccount &&
-      Object.keys(configuredProps).length > 0
-    ) {
-      // Check if there are any account-related props (props that would require a connected account)
-      // The app-specific prop (e.g., "slack", "google_sheets") contains the authProvisionId
-      const appPropKey = selectedApp.nameSlug.replace(/-/g, "_");
-      const hasAccountProp =
-        configuredProps[appPropKey] ||
-        Object.values(configuredProps).some(
-          (v) => typeof v === "object" && v !== null && "authProvisionId" in v
-        );
-
-      if (hasAccountProp) {
-        console.log(
-          "[Pipedream] No connected account but props contain account data, clearing props",
-          { app: selectedApp.nameSlug, configuredProps }
-        );
-        setConfiguredProps({});
-        onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
-      }
-    }
-  }, [
-    selectedApp?.nameSlug,
-    isLoadingAccounts,
-    hasConnectedAccount,
-    configuredProps,
-    onUpdateConfig,
-  ]);
-
-  // Log configured props for debugging
-  useEffect(() => {
-    if (selectedComponent?.key) {
-      console.log("[Pipedream] Configured props:", {
-        componentKey: selectedComponent.key,
-        externalUserId,
-        storedExternalUserId,
-        configuredProps,
-      });
-    }
-  }, [
-    selectedComponent?.key,
-    externalUserId,
-    storedExternalUserId,
-    configuredProps,
-  ]);
-
-  // Clear configured props if external user ID changed (props are user-specific)
-  useEffect(() => {
-    if (
-      storedExternalUserId &&
-      externalUserId &&
-      externalUserId !== "anonymous" &&
-      storedExternalUserId !== externalUserId
-    ) {
-      console.log(
-        "[Pipedream] External user ID changed, clearing configured props",
-        { from: storedExternalUserId, to: externalUserId }
-      );
-      setConfiguredProps({});
-      onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
-      onUpdateConfig("pipedreamExternalUserId", externalUserId);
-    }
-  }, [externalUserId, storedExternalUserId, onUpdateConfig]);
 
   // Handle app selection
   const handleAppChange = useCallback(
@@ -246,7 +107,6 @@ export function PipedreamActionConfig({
       onUpdateConfig("pipedreamAppName", app?.name || app?.nameSlug || "");
       onUpdateConfig("pipedreamAppLogo", app?.imgSrc || "");
       onUpdateConfig("pipedreamComponentKey", "");
-      onUpdateConfig("pipedreamComponentName", "");
       onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
     },
     [onUpdateConfig]
@@ -261,7 +121,6 @@ export function PipedreamActionConfig({
 
       // Sync to workflow state
       onUpdateConfig("pipedreamComponentKey", component?.key || "");
-      onUpdateConfig("pipedreamComponentName", component?.name || "");
       onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
 
       // Update node label to action name and description to app name
@@ -273,13 +132,7 @@ export function PipedreamActionConfig({
         onUpdateDescription(appName);
       }
     },
-    [
-      onUpdateConfig,
-      onUpdateLabel,
-      onUpdateDescription,
-      selectedApp?.name,
-      config?.pipedreamAppName,
-    ]
+    [onUpdateConfig, onUpdateLabel, onUpdateDescription, selectedApp?.name, config?.pipedreamAppName]
   );
 
   // Handle test execution
@@ -313,46 +166,33 @@ export function PipedreamActionConfig({
   // Build a deterministic list of prop names (base + latest dynamic props)
   const serializedPropNames = useMemo(() => {
     const names = new Set<string>();
-    if (selectedComponent?.configurableProps) {
-      for (const prop of selectedComponent.configurableProps) {
-        names.add(prop.name);
-      }
-    }
-    if (latestDynamicProps?.configurableProps) {
-      for (const prop of latestDynamicProps.configurableProps) {
-        names.add(prop.name);
-      }
-    }
+    selectedComponent?.configurableProps?.forEach((prop) =>
+      names.add(prop.name)
+    );
+    latestDynamicProps?.configurableProps?.forEach((prop) =>
+      names.add(prop.name)
+    );
     return names;
   }, [selectedComponent?.configurableProps, latestDynamicProps]);
 
   // Persist configured props when they change (one-way sync to store)
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex serialization logic for Pipedream props
   useEffect(() => {
-    if (!selectedComponent?.key) {
-      return;
-    }
+    if (!selectedComponent?.key) return;
 
     const props = configuredProps || {};
     const serializable: Record<string, unknown> = {};
 
     // Collect every key we can discover
     const keyCandidates = new Set<string>();
-    for (const name of Object.keys(props || {})) {
-      keyCandidates.add(name);
-    }
-    for (const name of Object.getOwnPropertyNames(props || {})) {
-      keyCandidates.add(name);
-    }
-    for (const name of serializedPropNames) {
-      keyCandidates.add(name);
-    }
+    Object.keys(props || {}).forEach((name) => keyCandidates.add(name));
+    Object.getOwnPropertyNames(props || {}).forEach((name) =>
+      keyCandidates.add(name)
+    );
+    serializedPropNames.forEach((name) => keyCandidates.add(name));
     try {
-      for (const key of Reflect.ownKeys(props || {})) {
-        if (typeof key === "string") {
-          keyCandidates.add(key);
-        }
-      }
+      Reflect.ownKeys(props || {}).forEach((key) => {
+        if (typeof key === "string") keyCandidates.add(key);
+      });
     } catch {
       // ignore
     }
@@ -360,7 +200,7 @@ export function PipedreamActionConfig({
     // Pull values by key
     for (const name of keyCandidates) {
       try {
-        const value = (props as Record<string, unknown>)?.[name];
+        const value = (props as any)?.[name];
         if (value !== undefined) {
           serializable[name] = value;
         }
@@ -386,10 +226,6 @@ export function PipedreamActionConfig({
     if (shouldUpdateProps) {
       lastSavedPropsJson.current = json;
       onUpdateConfig("pipedreamConfiguredProps", json);
-      // Also save the external user ID that owns these props
-      if (externalUserId && externalUserId !== "anonymous") {
-        onUpdateConfig("pipedreamExternalUserId", externalUserId);
-      }
     }
 
     if (shouldUpdateKey) {
@@ -398,15 +234,12 @@ export function PipedreamActionConfig({
     }
   }, [
     configuredProps,
-    externalUserId,
     onUpdateConfig,
     selectedComponent?.key,
     serializedPropNames,
   ]);
 
   // Sync initial values from config on mount
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally run only on mount to restore saved state
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex initialization logic for Pipedream state
   useEffect(() => {
     const nameSlug = config?.pipedreamApp as string | undefined;
     const key = config?.pipedreamComponentKey as string | undefined;
@@ -437,35 +270,95 @@ export function PipedreamActionConfig({
 
   return (
     <div className="pipedream-config space-y-4" ref={containerRef}>
+
       {/* App Selection */}
       <div className="space-y-2">
-        <Label className="ml-1">
-          Select App <span className="text-muted-foreground">(3,000+)</span>
-        </Label>
-        <SelectApp
-          appsOptions={appsOptions}
-          onChange={handleAppChange}
-          value={selectedApp}
-        />
+        <Label className="ml-1">Select App</Label>
+        <div className="rounded-lg border bg-card p-2">
+          <SelectApp
+            appsOptions={appsOptions}
+            onChange={handleAppChange}
+            renderOption={(app) => (
+              <div className="flex items-center gap-2">
+                {app.imgSrc ? (
+                  <Image
+                    alt={app.name}
+                    className="rounded-sm"
+                    height={24}
+                    src={app.imgSrc}
+                    unoptimized
+                    width={24}
+                  />
+                ) : null}
+                <span>{app.name}</span>
+              </div>
+            )}
+            renderValue={(app) =>
+              app ? (
+                <div className="flex items-center gap-2">
+                  {app.imgSrc ? (
+                    <Image
+                      alt={app.name}
+                      className="rounded-sm"
+                      height={20}
+                      src={app.imgSrc}
+                      unoptimized
+                      width={20}
+                    />
+                  ) : null}
+                  <span>{app.name}</span>
+                </div>
+              ) : null
+            }
+            value={selectedApp}
+          />
+        </div>
       </div>
 
       {/* Action Selection */}
       {selectedApp && (
         <div className="space-y-2">
-          <Label className="ml-1">
-            Select Action{" "}
-            {actionCount > 0 && (
-              <span className="text-muted-foreground">({actionCount})</span>
-            )}
-          </Label>
-          <SelectComponent
-            app={selectedApp}
-            componentType="action"
-            onChange={handleComponentChange}
-            value={selectedComponent}
-          />
-        </div>
-      )}
+          <Label className="ml-1">Select Action</Label>
+        <SelectComponent
+          app={selectedApp}
+          componentType="action"
+          onChange={handleComponentChange}
+          renderOption={(component) => (
+            <div className="flex items-center gap-2">
+              {selectedApp?.imgSrc ? (
+                <Image
+                  alt={selectedApp.name}
+                  className="rounded-sm"
+                  height={20}
+                  src={selectedApp.imgSrc}
+                  unoptimized
+                  width={20}
+                />
+              ) : null}
+              <span>{component.name}</span>
+            </div>
+          )}
+          renderValue={(component) =>
+            component ? (
+              <div className="flex items-center gap-2">
+                {selectedApp?.imgSrc ? (
+                  <Image
+                    alt={selectedApp.name}
+                    className="rounded-sm"
+                    height={20}
+                    src={selectedApp.imgSrc}
+                    unoptimized
+                    width={20}
+                  />
+                ) : null}
+                <span>{component.name}</span>
+              </div>
+            ) : null
+          }
+          value={selectedComponent}
+        />
+      </div>
+    )}
 
       {/* Configuration Form */}
       {selectedComponent && (
@@ -473,11 +366,11 @@ export function PipedreamActionConfig({
           <Label className="ml-1">Configure Action</Label>
           <div className="rounded-lg border bg-card p-4">
             <ComponentFormContainer
+              key={selectedComponent.key}
               componentKey={selectedComponent.key}
               configuredProps={configuredProps}
               externalUserId={externalUserId}
               hideOptionalProps={false}
-              key={selectedComponent.key}
               onUpdateConfiguredProps={setConfiguredProps}
               onUpdateDynamicProps={setLatestDynamicProps}
             />
@@ -487,8 +380,8 @@ export function PipedreamActionConfig({
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={disabled || isTesting}
             onClick={handleTest}
-            type="button"
             variant="default"
+            type="button"
           >
             {isTesting ? (
               <>
