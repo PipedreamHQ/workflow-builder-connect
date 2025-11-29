@@ -4,6 +4,7 @@ import {
   ComponentFormContainer,
   SelectApp,
   SelectComponent,
+  useAccounts,
   useComponents,
 } from "@pipedream/connect-react";
 import type {
@@ -47,7 +48,28 @@ export function PipedreamActionConfig({
   disabled,
 }: PipedreamActionConfigProps) {
   const { data: session } = useSession();
-  const externalUserId = session?.user?.id || "anonymous";
+
+  // Get external user ID with same logic as PipedreamProvider
+  // Priority: env override > authenticated user > session UUID
+  const getExternalUserId = useCallback(() => {
+    const envOverride = process.env.NEXT_PUBLIC_EXTERNAL_USER_ID;
+    if (envOverride) return envOverride;
+    // Only use session user ID if authenticated (not anonymous)
+    if (session?.user?.id && !session?.user?.isAnonymous) {
+      return session.user.id;
+    }
+    // Get from sessionStorage (set by PipedreamProvider)
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("pipedream_anonymous_user_id");
+      if (stored) return stored;
+    }
+    return "anonymous";
+  }, [session?.user?.id, session?.user?.isAnonymous]);
+
+  const externalUserId = getExternalUserId();
+
+  // Track which external user ID was used to configure props
+  const storedExternalUserId = config?.pipedreamExternalUserId as string | undefined;
 
   // Selected app state
   const [selectedApp, setSelectedApp] = useState<App | undefined>(() => {
@@ -72,7 +94,21 @@ export function PipedreamActionConfig({
   });
 
   // Configured props state (parse from JSON string if stored)
+  // Only restore props if the external user ID matches (props are user-specific)
   const [configuredProps, setConfiguredProps] = useState<ConfiguredProps>(() => {
+    // Check if the stored props belong to the current user
+    const storedUserId = config?.pipedreamExternalUserId as string | undefined;
+    const currentUserId = getExternalUserId();
+
+    // If there's a stored user ID and it doesn't match current user, don't restore props
+    if (storedUserId && currentUserId !== "anonymous" && storedUserId !== currentUserId) {
+      console.log("[Pipedream] Skipping props restore - user ID mismatch", {
+        stored: storedUserId,
+        current: currentUserId,
+      });
+      return {};
+    }
+
     const stored = config?.pipedreamConfiguredProps;
     if (typeof stored === "string" && stored) {
       try {
@@ -101,6 +137,71 @@ export function PipedreamActionConfig({
     componentType: "action",
   });
   const actionCount = actionsForApp?.length ?? 0;
+
+  // Check if account is connected for the selected app
+  const { accounts: connectedAccounts, isLoading: isLoadingAccounts } = useAccounts({
+    app: selectedApp?.nameSlug,
+    external_user_id: externalUserId !== "anonymous" ? externalUserId : undefined,
+  });
+  const hasConnectedAccount = connectedAccounts.length > 0;
+
+  // Clear configured props if no account is connected but props exist
+  // This handles the case where props were saved with a different user's account
+  useEffect(() => {
+    if (
+      selectedApp?.nameSlug &&
+      !isLoadingAccounts &&
+      !hasConnectedAccount &&
+      Object.keys(configuredProps).length > 0
+    ) {
+      // Check if there are any account-related props (props that would require a connected account)
+      // The app-specific prop (e.g., "slack", "google_sheets") contains the authProvisionId
+      const appPropKey = selectedApp.nameSlug.replace(/-/g, "_");
+      const hasAccountProp = configuredProps[appPropKey] ||
+        Object.values(configuredProps).some(
+          (v) => typeof v === "object" && v !== null && "authProvisionId" in v
+        );
+
+      if (hasAccountProp) {
+        console.log(
+          "[Pipedream] No connected account but props contain account data, clearing props",
+          { app: selectedApp.nameSlug, configuredProps }
+        );
+        setConfiguredProps({});
+        onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
+      }
+    }
+  }, [selectedApp?.nameSlug, isLoadingAccounts, hasConnectedAccount, configuredProps, onUpdateConfig]);
+
+  // Log configured props for debugging
+  useEffect(() => {
+    if (selectedComponent?.key) {
+      console.log("[Pipedream] Configured props:", {
+        componentKey: selectedComponent.key,
+        externalUserId,
+        storedExternalUserId,
+        configuredProps,
+      });
+    }
+  }, [selectedComponent?.key, externalUserId, storedExternalUserId, configuredProps]);
+
+  // Clear configured props if external user ID changed (props are user-specific)
+  useEffect(() => {
+    if (
+      storedExternalUserId &&
+      externalUserId &&
+      externalUserId !== "anonymous" &&
+      storedExternalUserId !== externalUserId
+    ) {
+      console.log(
+        "[Pipedream] External user ID changed, clearing configured props",
+        { from: storedExternalUserId, to: externalUserId }
+      );
+      setConfiguredProps({});
+      onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
+      onUpdateConfig("pipedreamExternalUserId", externalUserId);
+    }
+  }, [externalUserId, storedExternalUserId, onUpdateConfig]);
 
   // Handle app selection
   const handleAppChange = useCallback(
@@ -236,6 +337,10 @@ export function PipedreamActionConfig({
     if (shouldUpdateProps) {
       lastSavedPropsJson.current = json;
       onUpdateConfig("pipedreamConfiguredProps", json);
+      // Also save the external user ID that owns these props
+      if (externalUserId && externalUserId !== "anonymous") {
+        onUpdateConfig("pipedreamExternalUserId", externalUserId);
+      }
     }
 
     if (shouldUpdateKey) {
@@ -244,6 +349,7 @@ export function PipedreamActionConfig({
     }
   }, [
     configuredProps,
+    externalUserId,
     onUpdateConfig,
     selectedComponent?.key,
     serializedPropNames,

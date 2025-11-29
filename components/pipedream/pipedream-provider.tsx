@@ -5,10 +5,31 @@ import {
   FrontendClientProvider,
   CustomizeProvider,
 } from "@pipedream/connect-react";
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSession } from "@/lib/auth-client";
 import { serverConnectTokenCreate } from "@/lib/pipedream/server";
 import { cn } from "@/lib/utils";
+
+// Generate or retrieve a session-stable anonymous user ID
+function getAnonymousUserId(): string {
+  const STORAGE_KEY = "pipedream_anonymous_user_id";
+
+  // Check sessionStorage first for consistency during the session
+  if (typeof window !== "undefined") {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return stored;
+    }
+
+    // Generate a new UUID v4
+    const newId = crypto.randomUUID();
+    sessionStorage.setItem(STORAGE_KEY, newId);
+    return newId;
+  }
+
+  // Fallback for SSR
+  return crypto.randomUUID();
+}
 
 // Theme configuration to match shadcn/ui dark theme
 const pipedreamTheme = {
@@ -51,9 +72,40 @@ type PipedreamProviderProps = {
 export function PipedreamProvider({ children }: PipedreamProviderProps) {
   const { data: session } = useSession();
 
-  // Map Better Auth user ID to Pipedream external user ID
-  // Falls back to "anonymous" for unauthenticated users
-  const externalUserId = session?.user?.id || "anonymous";
+  // Determine external user ID with priority:
+  // 1. NEXT_PUBLIC_EXTERNAL_USER_ID env var override (for testing)
+  // 2. Authenticated (non-anonymous) user's session ID
+  // 3. Random UUID per browser session (stored in sessionStorage - new ID each browser session)
+  //
+  // We intentionally DON'T use Better Auth's anonymous user ID because:
+  // - It persists in cookies across browser sessions
+  // - We want each browser session to have isolated Pipedream account connections
+  const envOverride = process.env.NEXT_PUBLIC_EXTERNAL_USER_ID;
+  const isAuthenticated = session?.user?.id && !session?.user?.isAnonymous;
+  const authenticatedUserId = isAuthenticated ? session.user.id : null;
+
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // Generate session-scoped ID on client side only (to avoid hydration mismatch)
+  useEffect(() => {
+    if (!envOverride && !authenticatedUserId) {
+      setSessionId(getAnonymousUserId());
+    }
+  }, [envOverride, authenticatedUserId]);
+
+  const externalUserId = envOverride || authenticatedUserId || sessionId || "anonymous";
+
+  // Log the external user ID for debugging
+  useEffect(() => {
+    if (externalUserId && externalUserId !== "anonymous") {
+      const source = envOverride
+        ? "env override"
+        : authenticatedUserId
+          ? "authenticated user"
+          : "session UUID";
+      console.log("[Pipedream] External User ID:", externalUserId, `(${source})`);
+    }
+  }, [externalUserId, envOverride, authenticatedUserId]);
 
   // Token callback that calls our server action
   const tokenCallback = useCallback(
