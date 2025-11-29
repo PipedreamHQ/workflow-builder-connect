@@ -583,6 +583,7 @@ export const PanelInner = () => {
                   handleUpdateConfigBatch({
                     actionType: "Pipedream Action",
                     pipedreamApp: app.nameSlug,
+                    pipedreamAppName: app.name,
                     pipedreamAppLogo: app.imgSrc || "",
                     pipedreamComponentKey: "",
                     pipedreamConfiguredProps: JSON.stringify({}),

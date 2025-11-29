@@ -310,10 +310,11 @@ export function PipedreamActionConfig({
           </div>
           {/* Test Button */}
           <Button
-            className="w-full"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={disabled || isTesting}
             onClick={handleTest}
-            variant="secondary"
+            variant="default"
+            type="button"
           >
             {isTesting ? (
               <>

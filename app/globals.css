@@ -253,19 +253,13 @@
  * needs to allow overflow when a dropdown is open.
  */
 
-/* Base menu styling - high z-index and absolute positioning */
-/* Target both react-select prefixed classes AND emotion-generated classes */
-.react-select__menu,
-[class*="-menu"]:not([class*="-menu-"]):not(.pipedream-config),
-.pipedream-config [class$="-menu"],
-.pipedream-config [class*="__menu"] {
-  z-index: 99999 !important;
+/* Base menu styling - only colors, let react-select handle sizing/positioning */
+.react-select__menu {
   background: var(--card) !important;
-  background-color: var(--card) !important;
   border: 1px solid var(--border) !important;
   box-shadow: 0 20px 60px rgba(2, 6, 23, 0.35) !important;
   color: var(--foreground) !important;
-  opacity: 1 !important;
+  font-size: 0.875rem !important;
 }
 
 .pipedream-config [class$="-menu-list"],
@@ -276,26 +270,42 @@
 .react-select__option {
   background: var(--card) !important;
   background-color: var(--card) !important;
+  font-size: 0.875rem !important;
 }
 
 /* Hover effects for options */
 .react-select__option:hover,
-.react-select__option--is-focused,
-[class$="-option"]:hover {
+.react-select__option--is-focused {
   background: var(--accent) !important;
   background-color: var(--accent) !important;
+  color: var(--foreground) !important;
 }
 
+/* Selected option - use accent background to match other form elements */
 .react-select__option--is-selected {
-  background: var(--primary) !important;
-  background-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
+  background: var(--accent) !important;
+  background-color: var(--accent) !important;
+  color: var(--foreground) !important;
+  font-weight: 500 !important;
+}
+
+/* Selected + hovered */
+.react-select__option--is-selected:hover,
+.react-select__option--is-selected.react-select__option--is-focused {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
 }
 
 /* Ensure select containers have proper stacking */
 .pipedream-config .react-select-container,
 .pipedream-config [class*="-container"] {
   position: relative;
+  width: 100%;
+}
+
+.pipedream-config [class$="-control"],
+.pipedream-config [class*="__control"] {
+  width: 100% !important;
 }
 
 /* When dropdown is open, boost the container z-index */
@@ -312,15 +322,76 @@
   opacity: 1 !important;
 }
 
-/* If a menu portal is used, ensure it sits on top */
-.pipedream-config [class$="-menu-portal"],
+/* Align checkbox labels tightly in Pipedream forms */
+.pipedream-config label:has(input[type="checkbox"]) {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.pipedream-config label:has(input[type="checkbox"]) input[type="checkbox"] {
+  margin-top: 2px;
+}
+
+/* Pipedream submit button: primary styling fallback */
+.pipedream-config button[type="submit"],
+.pipedream-config [class*="controlSubmit"] {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: 1px solid hsl(var(--primary)) !important;
+  border-radius: 0.5rem !important;
+  height: 2.5rem !important;
+}
+.pipedream-config button[type="submit"]:hover,
+.pipedream-config [class*="controlSubmit"]:hover {
+  background: hsl(var(--primary) / 0.9) !important;
+}
+
+/* Fix boolean field grid layout - tighten checkbox spacing */
+.pipedream-config .pd-field:has(input[type="checkbox"]) {
+  grid-template-columns: auto 1fr !important;
+  gap: 0.25rem 0.5rem !important;
+}
+
+/* Reset all checkbox margins in pipedream forms */
+.pipedream-config input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Style the menu portal - only set z-index, let react-select handle positioning */
 .react-select__menu-portal {
   z-index: 99999 !important;
 }
 
-.pipedream-config [class$="-menu-portal"] [class$="-menu"],
 .react-select__menu-portal .react-select__menu {
-  pointer-events: auto !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.35) !important;
+}
+
+.react-select__menu-portal .react-select__option {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+.react-select__menu-portal .react-select__option:hover,
+.react-select__menu-portal .react-select__option--is-focused {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
+}
+
+.react-select__menu-portal .react-select__option--is-selected {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
+  font-weight: 500 !important;
+}
+
+.react-select__menu-portal .react-select__option--is-selected:hover,
+.react-select__menu-portal .react-select__option--is-selected.react-select__option--is-focused {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
 }
 
 /* Ensure the entire Pipedream config block sits above underlying content */

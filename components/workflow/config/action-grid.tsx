@@ -22,6 +22,39 @@ import { IntegrationIcon } from "@/components/ui/integration-icon";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+const InlineSwitch = ({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (val: boolean) => void;
+  disabled?: boolean;
+}) => (
+  <button
+    aria-pressed={checked}
+    className={cn(
+      "relative inline-flex h-4.5 w-8 items-center rounded-full border transition-colors",
+      checked
+        ? "border-muted-foreground/40 bg-muted-foreground/15"
+        : "border-input bg-muted",
+      disabled && "cursor-not-allowed opacity-60"
+    )}
+    disabled={disabled}
+    onClick={() => onChange(!checked)}
+    type="button"
+  >
+    <span
+      className={cn(
+        "inline-block size-3.5 translate-x-[2px] rounded-full bg-card shadow transition-transform",
+        checked && "translate-x-[14px] bg-muted-foreground"
+      )}
+    />
+  </button>
+);
+
+type ActionFilterMode = "all" | "vercel";
+
 type ActionType = {
   id: string;
   label: string;
@@ -139,6 +172,8 @@ export function ActionGrid({
 }: ActionGridProps) {
   const [filter, setFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
+  const [actionFilterMode, setActionFilterMode] =
+    useState<ActionFilterMode>("all"); // default include all
   const [vercelExpanded, setVercelExpanded] = useState(true);
   const [pipedreamExpanded, setPipedreamExpanded] = useState(true);
 
@@ -179,7 +214,10 @@ export function ActionGrid({
   const filteredVercelActions = filterActions(vercelActions);
   const hasVercelResults = filteredVercelActions.length > 0;
   const hasPipedreamResults = pipedreamApps.length > 0;
-  const hasResults = hasVercelResults || hasPipedreamResults || isPipedreamLoading;
+  const hasResults =
+    (actionFilterMode === "vercel" && hasVercelResults) ||
+    (actionFilterMode === "all" &&
+      (hasVercelResults || hasPipedreamResults || isPipedreamLoading));
 
   const renderActionButton = (action: ActionType) => (
     <button
@@ -238,10 +276,23 @@ export function ActionGrid({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="space-y-1">
-        <Label className="ml-1" htmlFor="action-filter">
-          Search Actions
-        </Label>
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <Label className="ml-1 font-semibold" htmlFor="action-filter">
+            Search Actions
+          </Label>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+            <InlineSwitch
+              aria-label="Include Pipedream actions"
+              checked={actionFilterMode === "all"}
+              onChange={(checked) =>
+                setActionFilterMode(checked ? "all" : "vercel")
+              }
+              disabled={disabled}
+            />
+            <span>Include <a href="https://pipedream.com/connect" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Pipedream</a> actions</span>
+          </div>
+        </div>
         <div className="relative">
           <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
           <Input
@@ -249,11 +300,12 @@ export function ActionGrid({
             disabled={disabled}
             id="action-filter"
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Search all actions..."
+            placeholder="Search actions..."
             value={filter}
           />
         </div>
       </div>
+
 
       {/* Vercel Actions Section - Expandable */}
       {hasVercelResults && (
@@ -281,70 +333,72 @@ export function ActionGrid({
       )}
 
       {/* Pipedream Apps Section - Expandable */}
-      <div className="space-y-2">
-        <button
-          className="flex w-full items-center gap-1 text-left"
-          onClick={() => setPipedreamExpanded(!pipedreamExpanded)}
-          type="button"
-        >
-          {pipedreamExpanded ? (
-            <ChevronDown className="size-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="size-4 text-muted-foreground" />
-          )}
-          <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-            Pipedream Apps (3,000+)
-          </h3>
-          {isPipedreamLoading && (
-            <Loader2 className="ml-1 size-3 animate-spin text-muted-foreground" />
-          )}
-        </button>
-        {pipedreamExpanded && (
-          <>
-            {hasPipedreamResults ? (
-              <div className="grid grid-cols-2 gap-2">
-                {pipedreamApps.map(renderPipedreamAppButton)}
-              </div>
-            ) : isPipedreamLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="size-6 animate-spin text-muted-foreground" />
-              </div>
+      {actionFilterMode === "all" && (
+        <div className="space-y-2">
+          <button
+            className="flex w-full items-center gap-1 text-left"
+            onClick={() => setPipedreamExpanded(!pipedreamExpanded)}
+            type="button"
+          >
+            {pipedreamExpanded ? (
+              <ChevronDown className="size-4 text-muted-foreground" />
             ) : (
-              <button
-                className={cn(
-                  "flex flex-col items-center justify-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:border-primary hover:bg-accent",
-                  disabled && "pointer-events-none opacity-50"
-                )}
-                disabled={disabled}
-                onClick={() => onSelectAction("Pipedream Action")}
-                type="button"
-              >
-                <IntegrationIcon className="size-8" integration="pipedream" />
-                <p className="text-center font-medium text-sm">
-                  Browse All Apps
-                </p>
-              </button>
+              <ChevronRight className="size-4 text-muted-foreground" />
             )}
-            {hasMore && hasPipedreamResults && (
-              <button
-                className="w-full rounded-lg border bg-card p-2 text-muted-foreground text-sm transition-colors hover:bg-accent"
-                disabled={isLoadingMore}
-                onClick={() => loadMore()}
-                type="button"
-              >
-                {isLoadingMore ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="size-4 animate-spin" />
-                    Loading more...
-                  </span>
-                ) : (
-                  "Load more apps"
-                )}
-              </button>
+            <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+              Pipedream Apps (3,000+)
+            </h3>
+            {isPipedreamLoading && (
+              <Loader2 className="ml-1 size-3 animate-spin text-muted-foreground" />
             )}
-          </>
-        )}
-      </div>
+          </button>
+          {pipedreamExpanded && (
+            <>
+              {hasPipedreamResults ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {pipedreamApps.map(renderPipedreamAppButton)}
+                </div>
+              ) : isPipedreamLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <button
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:border-primary hover:bg-accent",
+                    disabled && "pointer-events-none opacity-50"
+                  )}
+                  disabled={disabled}
+                  onClick={() => onSelectAction("Pipedream Action")}
+                  type="button"
+                >
+                  <IntegrationIcon className="size-8" integration="pipedream" />
+                  <p className="text-center font-medium text-sm">
+                    Browse All Apps
+                  </p>
+                </button>
+              )}
+              {hasMore && hasPipedreamResults && (
+                <button
+                  className="w-full rounded-lg border bg-card p-2 text-muted-foreground text-sm transition-colors hover:bg-accent"
+                  disabled={isLoadingMore}
+                  onClick={() => loadMore()}
+                  type="button"
+                >
+                  {isLoadingMore ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="size-4 animate-spin" />
+                      Loading more...
+                    </span>
+                  ) : (
+                    "Load more apps"
+                  )}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {!hasResults && !isPipedreamLoading && (
         <p className="py-8 text-center text-muted-foreground text-sm">

@@ -8,6 +8,7 @@ import {
 import { useCallback, useMemo, type ReactNode } from "react";
 import { useSession } from "@/lib/auth-client";
 import { serverConnectTokenCreate } from "@/lib/pipedream/server";
+import { cn } from "@/lib/utils";
 
 // Theme configuration to match shadcn/ui dark theme
 const pipedreamTheme = {
@@ -82,6 +83,21 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
             menuPlacement: "auto",
             menuShouldBlockScroll: false,
           }),
+        }}
+        classNames={{
+          controlSubmit: ({ form }) =>
+            cn(
+              "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90",
+              (form?.submitting || form?.disabled) &&
+                "opacity-70 cursor-not-allowed hover:bg-primary"
+            ),
+        }}
+        styles={{
+          controlSubmit: {
+            backgroundColor: "hsl(var(--primary))",
+            color: "hsl(var(--primary-foreground))",
+            borderColor: "hsl(var(--primary))",
+          },
         }}
       >
         {children}
