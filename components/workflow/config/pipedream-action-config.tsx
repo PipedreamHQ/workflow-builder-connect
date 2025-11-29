@@ -4,6 +4,7 @@ import {
   ComponentFormContainer,
   SelectApp,
   SelectComponent,
+  useComponents,
 } from "@pipedream/connect-react";
 import type {
   App,
@@ -66,7 +67,8 @@ export function PipedreamActionConfig({
     Component | undefined
   >(() => {
     const key = config?.pipedreamComponentKey as string | undefined;
-    return key ? ({ key } as Component) : undefined;
+    const name = config?.pipedreamComponentName as string | undefined;
+    return key ? ({ key, name: name || key } as Component) : undefined;
   });
 
   // Configured props state (parse from JSON string if stored)
@@ -93,6 +95,13 @@ export function PipedreamActionConfig({
   const [isTesting, setIsTesting] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // Get action count for selected app
+  const { components: actionsForApp } = useComponents({
+    app: selectedApp?.nameSlug,
+    componentType: "action",
+  });
+  const actionCount = actionsForApp?.length ?? 0;
+
   // Handle app selection
   const handleAppChange = useCallback(
     (app?: App) => {
@@ -106,6 +115,7 @@ export function PipedreamActionConfig({
       onUpdateConfig("pipedreamAppName", app?.name || app?.nameSlug || "");
       onUpdateConfig("pipedreamAppLogo", app?.imgSrc || "");
       onUpdateConfig("pipedreamComponentKey", "");
+      onUpdateConfig("pipedreamComponentName", "");
       onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
     },
     [onUpdateConfig]
@@ -120,6 +130,7 @@ export function PipedreamActionConfig({
 
       // Sync to workflow state
       onUpdateConfig("pipedreamComponentKey", component?.key || "");
+      onUpdateConfig("pipedreamComponentName", component?.name || "");
       onUpdateConfig("pipedreamConfiguredProps", JSON.stringify({}));
 
       // Update node label to action name and description to app name
@@ -272,7 +283,9 @@ export function PipedreamActionConfig({
 
       {/* App Selection */}
       <div className="space-y-2">
-        <Label className="ml-1">Select App</Label>
+        <Label className="ml-1">
+          Select App <span className="text-muted-foreground">(3,000+)</span>
+        </Label>
         <SelectApp
           appsOptions={appsOptions}
           onChange={handleAppChange}
@@ -283,7 +296,9 @@ export function PipedreamActionConfig({
       {/* Action Selection */}
       {selectedApp && (
         <div className="space-y-2">
-          <Label className="ml-1">Select Action</Label>
+          <Label className="ml-1">
+            Select Action {actionCount > 0 && <span className="text-muted-foreground">({actionCount})</span>}
+          </Label>
           <SelectComponent
             app={selectedApp}
             componentType="action"

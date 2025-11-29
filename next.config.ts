@@ -7,6 +7,18 @@ const nextConfig: NextConfig = {
     // Enable symlinks for local package development
     externalDir: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "assets.pipedream.net",
+      },
+      {
+        protocol: "https",
+        hostname: "pipedream.com",
+      },
+    ],
+  },
   webpack: (config) => {
     // Resolve symlinks to their real paths
     config.resolve.symlinks = true;

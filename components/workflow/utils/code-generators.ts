@@ -5,6 +5,7 @@
 import conditionTemplate from "@/lib/codegen-templates/condition";
 import databaseQueryTemplate from "@/lib/codegen-templates/database-query";
 import httpRequestTemplate from "@/lib/codegen-templates/http-request";
+import pipedreamActionTemplate from "@/lib/codegen-templates/pipedream-action";
 import { generateImageCodegenTemplate } from "@/plugins/ai-gateway/codegen/generate-image";
 import { generateTextCodegenTemplate } from "@/plugins/ai-gateway/codegen/generate-text";
 import { scrapeCodegenTemplate } from "@/plugins/firecrawl/codegen/scrape";
@@ -90,6 +91,8 @@ export async function POST(request: NextRequest) {
         return createChatCodegenTemplate;
       case "Send Message":
         return sendMessageCodegenTemplate;
+      case "Pipedream Action":
+        return pipedreamActionTemplate;
       default:
         return `async function actionStep(input: Record<string, unknown>) {
   "use step";

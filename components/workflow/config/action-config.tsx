@@ -24,6 +24,8 @@ import { SchemaBuilder, type SchemaField } from "./schema-builder";
 type ActionConfigProps = {
   config: Record<string, unknown>;
   onUpdateConfig: (key: string, value: string) => void;
+  onUpdateLabel?: (label: string) => void;
+  onUpdateDescription?: (description: string) => void;
   disabled: boolean;
 };
 
@@ -240,6 +242,8 @@ function getCategoryForAction(
 export function ActionConfig({
   config,
   onUpdateConfig,
+  onUpdateLabel,
+  onUpdateDescription,
   disabled,
 }: ActionConfigProps) {
   const actionType = (config?.actionType as string) || "";
@@ -378,6 +382,8 @@ export function ActionConfig({
           config={config}
           disabled={disabled}
           onUpdateConfig={onUpdateConfig}
+          onUpdateLabel={onUpdateLabel}
+          onUpdateDescription={onUpdateDescription}
         />
       )}
 

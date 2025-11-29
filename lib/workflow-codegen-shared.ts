@@ -337,6 +337,10 @@ export function getStepInfo(actionType: string): {
         functionName: "sendMessageStep",
         importPath: "./steps/v0",
       },
+      "Pipedream Action": {
+        functionName: "runPipedreamAction",
+        importPath: "./steps/pipedream-action",
+      },
     };
 
   return (

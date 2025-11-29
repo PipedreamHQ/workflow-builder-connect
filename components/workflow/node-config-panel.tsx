@@ -682,6 +682,17 @@ export const PanelInner = () => {
                 onSelectAction={(actionType) =>
                   handleUpdateConfig("actionType", actionType)
                 }
+                onSelectPipedreamApp={(app) => {
+                  // Set action type to Pipedream Action and store app details
+                  const newConfig = {
+                    ...selectedNode.data.config,
+                    actionType: "Pipedream Action",
+                    pipedreamApp: app.nameSlug,
+                    pipedreamAppName: app.name,
+                    pipedreamAppLogo: app.imgSrc || `https://pipedream.com/s.v0/${app.id}/logo/48`,
+                  };
+                  updateNodeData({ id: selectedNode.id, data: { config: newConfig } });
+                }}
               />
             ) : null}
 
@@ -691,6 +702,8 @@ export const PanelInner = () => {
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
                 onUpdateConfig={handleUpdateConfig}
+                onUpdateLabel={handleUpdateLabel}
+                onUpdateDescription={handleUpdateDescription}
               />
             ) : null}
 
