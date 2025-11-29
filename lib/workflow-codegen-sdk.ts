@@ -1,15 +1,18 @@
 import "server-only";
 
+import { generateImageCodegenTemplate } from "../plugins/ai-gateway/codegen/generate-image";
+import { generateTextCodegenTemplate } from "../plugins/ai-gateway/codegen/generate-text";
+import { scrapeCodegenTemplate } from "../plugins/firecrawl/codegen/scrape";
+import { searchCodegenTemplate } from "../plugins/firecrawl/codegen/search";
+import { createTicketCodegenTemplate } from "../plugins/linear/codegen/create-ticket";
+import { sendEmailCodegenTemplate } from "../plugins/resend/codegen/send-email";
+import { sendSlackMessageCodegenTemplate } from "../plugins/slack/codegen/send-slack-message";
+import { createChatCodegenTemplate } from "../plugins/v0/codegen/create-chat";
+import { sendMessageCodegenTemplate } from "../plugins/v0/codegen/send-message";
 // Import codegen templates directly
 import conditionTemplate from "./codegen-templates/condition";
-import createTicketTemplate from "./codegen-templates/create-ticket";
 import databaseQueryTemplate from "./codegen-templates/database-query";
-import firecrawlTemplate from "./codegen-templates/firecrawl";
-import generateImageTemplate from "./codegen-templates/generate-image";
-import generateTextTemplate from "./codegen-templates/generate-text";
 import httpRequestTemplate from "./codegen-templates/http-request";
-import sendEmailTemplate from "./codegen-templates/send-email";
-import sendSlackMessageTemplate from "./codegen-templates/send-slack-message";
 import {
   ARRAY_INDEX_PATTERN,
   analyzeNodeUsage,
@@ -30,17 +33,19 @@ const FUNCTION_BODY_REGEX =
 
 function loadStepImplementation(actionType: string): string | null {
   const templateMap: Record<string, string> = {
-    "Send Email": sendEmailTemplate,
-    "Send Slack Message": sendSlackMessageTemplate,
-    "Create Ticket": createTicketTemplate,
-    "Find Issues": createTicketTemplate, // Uses same template for now
-    "Generate Text": generateTextTemplate,
-    "Generate Image": generateImageTemplate,
+    "Send Email": sendEmailCodegenTemplate,
+    "Send Slack Message": sendSlackMessageCodegenTemplate,
+    "Create Ticket": createTicketCodegenTemplate,
+    "Find Issues": createTicketCodegenTemplate, // Uses same template for now
+    "Generate Text": generateTextCodegenTemplate,
+    "Generate Image": generateImageCodegenTemplate,
     "Database Query": databaseQueryTemplate,
-    Scrape: firecrawlTemplate,
-    Search: firecrawlTemplate,
+    Scrape: scrapeCodegenTemplate,
+    Search: searchCodegenTemplate,
     "HTTP Request": httpRequestTemplate,
     Condition: conditionTemplate,
+    "Create Chat": createChatCodegenTemplate,
+    "Send Message": sendMessageCodegenTemplate,
   };
 
   const template = templateMap[actionType];
@@ -314,7 +319,7 @@ function _generateGenerateImageStepBody(
   const finalPrompt = (input.imagePrompt as string) || imagePrompt;
   
   const response = await openai.images.generate({
-    model: '${config.imageModel || "bfl/flux-2-pro"}',
+    model: '${config.imageModel || "google/imagen-4.0-generate"}',
     prompt: finalPrompt,
     n: 1,
     response_format: 'b64_json',
@@ -493,13 +498,28 @@ export function generateWorkflowSDKCode(
 
   function buildAITextParams(config: Record<string, unknown>): string[] {
     imports.add("import { generateText } from 'ai';");
-    const modelId = (config.aiModel as string) || "gpt-4o-mini";
-    const provider =
-      modelId.startsWith("gpt-") || modelId.startsWith("o1-")
-        ? "openai"
-        : "anthropic";
+    const modelId = (config.aiModel as string) || "meta/llama-4-scout";
+
+    // Determine the full model string with provider
+    // If the model already contains a "/", it already has a provider prefix, so use as-is
+    let modelString: string;
+    if (modelId.includes("/")) {
+      modelString = modelId;
+    } else {
+      // Infer provider from model name for models without provider prefix
+      let provider: string;
+      if (modelId.startsWith("gpt-") || modelId.startsWith("o1-")) {
+        provider = "openai";
+      } else if (modelId.startsWith("claude-")) {
+        provider = "anthropic";
+      } else {
+        provider = "openai"; // default to openai
+      }
+      modelString = `${provider}/${modelId}`;
+    }
+
     return [
-      `model: "${provider}/${modelId}"`,
+      `model: "${modelString}"`,
       `prompt: \`${convertTemplateToJS((config.aiPrompt as string) || "")}\``,
       "apiKey: process.env.OPENAI_API_KEY!",
     ];
@@ -509,7 +529,8 @@ export function generateWorkflowSDKCode(
     imports.add(
       "import { experimental_generateImage as generateImage } from 'ai';"
     );
-    const imageModel = (config.imageModel as string) || "bfl/flux-2-pro";
+    const imageModel =
+      (config.imageModel as string) || "google/imagen-4.0-generate";
     return [
       `model: "${imageModel}"`,
       `prompt: \`${convertTemplateToJS((config.imagePrompt as string) || "")}\``,
@@ -575,6 +596,29 @@ export function generateWorkflowSDKCode(
 
     return params;
   }
+
+  function buildV0CreateChatParams(config: Record<string, unknown>): string[] {
+    imports.add("import { createClient } from 'v0-sdk';");
+    const params = [
+      `message: \`${convertTemplateToJS((config.message as string) || "")}\``,
+      "apiKey: process.env.V0_API_KEY!",
+    ];
+    if (config.system) {
+      params.push(
+        `system: \`${convertTemplateToJS((config.system as string) || "")}\``
+      );
+    }
+    return params;
+  }
+
+  function buildV0SendMessageParams(config: Record<string, unknown>): string[] {
+    imports.add("import { createClient } from 'v0-sdk';");
+    return [
+      `chatId: \`${convertTemplateToJS((config.chatId as string) || "")}\``,
+      `message: \`${convertTemplateToJS((config.message as string) || "")}\``,
+      "apiKey: process.env.V0_API_KEY!",
+    ];
+  }
   function buildStepInputParams(
     actionType: string,
     config: Record<string, unknown>
@@ -590,6 +634,8 @@ export function generateWorkflowSDKCode(
       Condition: () => buildConditionParams(config),
       Scrape: () => buildFirecrawlParams(actionType, config),
       Search: () => buildFirecrawlParams(actionType, config),
+      "Create Chat": () => buildV0CreateChatParams(config),
+      "Send Message": () => buildV0SendMessageParams(config),
     };
 
     const builder = paramBuilders[actionType];

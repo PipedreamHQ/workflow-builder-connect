@@ -11,7 +11,6 @@ import type { WorkflowEdge, WorkflowNode } from "@/lib/workflow-store";
 async function executeWorkflowBackground(
   executionId: string,
   workflowId: string,
-  userId: string,
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
   input: Record<string, unknown>
@@ -37,7 +36,6 @@ async function executeWorkflowBackground(
         triggerInput: input,
         executionId,
         workflowId, // Pass workflow ID so steps can fetch credentials
-        userId,
       },
     ]);
 
@@ -114,7 +112,6 @@ export async function POST(
     executeWorkflowBackground(
       execution.id,
       workflowId,
-      workflow.userId,
       workflow.nodes as WorkflowNode[],
       workflow.edges as WorkflowEdge[],
       input

@@ -248,6 +248,7 @@
 }
 
 /*
+ * Pipedream Connect React styles
  * Fix z-index for react-select dropdowns in @pipedream/connect-react
  * The dropdown menu needs high z-index and the scrollable container
  * needs to allow overflow when a dropdown is open.

@@ -8,7 +8,7 @@ A template for building your own AI-driven workflow automation platform. Built o
 
 You can deploy your own version of the workflow builder to Vercel with one click:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fworkflow-builder-template&project-name=workflow-builder&repository-name=workflow-builder&demo-title=Workflow%20Builder&demo-description=A%20free%2C%20open-source%20template%20for%20building%20visual%20workflow%20automation%20platforms%20with%20real%20integrations%20and%20code%20generation&demo-url=https%3A%2F%2Fworkflow-builder-template.vercel.app&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2Fvercel-labs%2Fworkflow-builder-template%2Fmain%2Fscreenshot.png&env=BETTER_AUTH_SECRET,INTEGRATION_ENCRYPTION_KEY,AI_GATEWAY_API_KEY&envDescription=BETTER_AUTH_SECRET+and+INTEGRATION_ENCRYPTION_KEY+are+required+secrets.+AI_GATEWAY_API_KEY+is+optional.&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.new/workflow-builder)
 
 **What happens during deployment:**
 
@@ -82,6 +82,7 @@ Visit [http://localhost:3000](http://localhost:3000) to get started.
 - **Create Ticket** - Create Linear tickets
 - **Database Query** - Query or update PostgreSQL
 - **HTTP Request** - Call external APIs
+- **Firecrawl** - Scrape websites and search the web
 
 ## Code Generation
 
@@ -170,10 +171,10 @@ pnpm build
 pnpm type-check
 
 # Linting
-pnpm lint
+pnpm check
 
 # Formatting
-pnpm format
+pnpm fix
 
 # Database
 pnpm db:generate  # Generate migrations
@@ -232,6 +233,29 @@ await callApi({
   url: "https://api.example.com/endpoint",
   method: "POST",
   body: { data: "value" },
+});
+```
+
+### Firecrawl (Web Scraping)
+
+Scrape websites and search the web with Firecrawl.
+
+```typescript
+import {
+  firecrawlScrapeStep,
+  firecrawlSearchStep,
+} from "@/lib/steps/firecrawl";
+
+// Scrape a URL
+const scrapeResult = await firecrawlScrapeStep({
+  url: "https://example.com",
+  formats: ["markdown"],
+});
+
+// Search the web
+const searchResult = await firecrawlSearchStep({
+  query: "AI workflow builders",
+  limit: 5,
 });
 ```
 

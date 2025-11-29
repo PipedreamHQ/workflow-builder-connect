@@ -5,8 +5,8 @@
   "license": "Apache-2.0",
   "description": "A template for building your own AI-driven workflow automation platform",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "pnpm discover-plugins && next dev",
+    "build": "pnpm discover-plugins && next build",
     "start": "next start",
     "type-check": "tsc --noEmit",
     "check": "npx ultracite@latest check",
@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "discover-plugins": "node scripts/discover-plugins.mjs"
   },
   "dependencies": {
     "@ai-sdk/provider": "^2.0.0",
@@ -26,7 +27,9 @@
     "@radix-ui/react-context-menu": "^2.2.16",
     "@radix-ui/react-dialog": "^1.1.15",
     "@slack/web-api": "^7.12.0",
+    "@vercel/analytics": "^1.5.0",
     "@vercel/sdk": "^1.17.1",
+    "@vercel/speed-insights": "^1.2.0",
     "@xyflow/react": "^12.9.2",
     "ai": "^5.0.102",
     "better-auth": "^1.3.34",
@@ -51,6 +54,7 @@
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
+    "v0-sdk": "^0.15.1",
     "vaul": "^1.1.2",
     "workflow": "4.0.1-beta.17",
     "zod": "^4.1.12"

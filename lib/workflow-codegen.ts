@@ -408,7 +408,7 @@ export function generateWorkflowCode(
 
     const config = node.data.config || {};
     const aiPrompt = (config.aiPrompt as string) || "Generate a summary";
-    const aiModel = (config.aiModel as string) || "gpt-5";
+    const aiModel = (config.aiModel as string) || "meta/llama-4-scout";
     const aiFormat = (config.aiFormat as string) || "text";
     const aiSchema = config.aiSchema as string | undefined;
 
@@ -444,7 +444,7 @@ export function generateWorkflowCode(
     const imagePrompt =
       (node.data.config?.imagePrompt as string) || "A beautiful landscape";
     const imageModel =
-      (node.data.config?.imageModel as string) || "bfl/flux-2-pro";
+      (node.data.config?.imageModel as string) || "google/imagen-4.0-generate";
 
     return [
       `${indent}// Generate image using AI`,
@@ -541,31 +541,55 @@ export function generateWorkflowCode(
     return lines;
   }
 
-  function generatePipedreamActionCode(
+  function generateV0CreateChatActionCode(
     node: WorkflowNode,
     indent: string,
     varName: string
   ): string[] {
-    const stepInfo = getStepInfo("Pipedream Action");
+    const stepInfo = getStepInfo("Create Chat");
     imports.add(
       `import { ${stepInfo.functionName} } from '${stepInfo.importPath}';`
     );
 
     const config = node.data.config || {};
-    const pipedreamComponentKey = (config.pipedreamComponentKey as string) || "";
-    const pipedreamConfiguredProps = config.pipedreamConfiguredProps || "{}";
+    const message = (config.message as string) || "";
+    const system = (config.system as string) || "";
 
-    // Convert configuredProps to string if it's an object
-    const propsString = typeof pipedreamConfiguredProps === "string"
-      ? pipedreamConfiguredProps
-      : JSON.stringify(pipedreamConfiguredProps);
-
-    return [
+    const lines = [
       `${indent}const ${varName} = await ${stepInfo.functionName}({`,
-      `${indent}  pipedreamComponentKey: "${pipedreamComponentKey}",`,
-      `${indent}  pipedreamConfiguredProps: ${propsString},`,
+      `${indent}  message: ${formatTemplateValue(message)},`,
+    ];
+
+    if (system) {
+      lines.push(`${indent}  system: ${formatTemplateValue(system)},`);
+    }
+
+    lines.push(`${indent}});`);
+    return lines;
+  }
+
+  function generateV0SendMessageActionCode(
+    node: WorkflowNode,
+    indent: string,
+    varName: string
+  ): string[] {
+    const stepInfo = getStepInfo("Send Message");
+    imports.add(
+      `import { ${stepInfo.functionName} } from '${stepInfo.importPath}';`
+    );
+
+    const config = node.data.config || {};
+    const chatId = (config.chatId as string) || "";
+    const message = (config.message as string) || "";
+
+    const lines = [
+      `${indent}const ${varName} = await ${stepInfo.functionName}({`,
+      `${indent}  chatId: ${formatTemplateValue(chatId)},`,
+      `${indent}  message: ${formatTemplateValue(message)},`,
       `${indent}});`,
     ];
+
+    return lines;
   }
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Action type routing requires many conditionals
@@ -665,6 +689,16 @@ export function generateWorkflowCode(
       lines.push(
         ...wrapActionCall(generateFirecrawlActionCode(node, indent, varName))
       );
+    } else if (actionType === "Create Chat") {
+      lines.push(
+        ...wrapActionCall(generateV0CreateChatActionCode(node, indent, varName))
+      );
+    } else if (actionType === "Send Message") {
+      lines.push(
+        ...wrapActionCall(
+          generateV0SendMessageActionCode(node, indent, varName)
+        )
+      );
     } else if (actionType === "Database Query") {
       lines.push(
         ...wrapActionCall(generateDatabaseActionCode(node, indent, varName))
@@ -672,10 +706,6 @@ export function generateWorkflowCode(
     } else if (actionType === "HTTP Request" || endpoint) {
       lines.push(
         ...wrapActionCall(generateHTTPActionCode(indent, varName, endpoint))
-      );
-    } else if (actionType === "Pipedream Action") {
-      lines.push(
-        ...wrapActionCall(generatePipedreamActionCode(node, indent, varName))
       );
     } else if (label.includes("generate text") && !label.includes("email")) {
       // Fallback: check label but avoid matching "email" in labels

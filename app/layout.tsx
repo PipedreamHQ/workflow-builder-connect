@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Provider } from "jotai";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { AuthProvider } from "@/components/auth/provider";
+import { GitHubStarsLoader } from "@/components/github-stars-loader";
+import { GitHubStarsProvider } from "@/components/github-stars-provider";
 import { PipedreamProvider } from "@/components/pipedream/pipedream-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -29,6 +33,18 @@ type RootLayoutProps = {
   children: ReactNode;
 };
 
+// Inner content wrapped by GitHubStarsProvider (used for both loading and loaded states)
+function LayoutContent({ children }: { children: ReactNode }) {
+  return (
+    <PipedreamProvider>
+      <ReactFlowProvider>
+        <PersistentCanvas />
+        <div className="pointer-events-none relative z-10">{children}</div>
+      </ReactFlowProvider>
+    </PipedreamProvider>
+  );
+}
+
 const RootLayout = ({ children }: RootLayoutProps) => (
   <html lang="en" suppressHydrationWarning>
     <body className={cn(sans.variable, mono.variable, "antialiased")}>
@@ -40,18 +56,23 @@ const RootLayout = ({ children }: RootLayoutProps) => (
       >
         <Provider>
           <AuthProvider>
-            <PipedreamProvider>
-              <ReactFlowProvider>
-                <PersistentCanvas />
-                <div className="pointer-events-none relative z-10">
-                  {children}
-                </div>
-              </ReactFlowProvider>
-            </PipedreamProvider>
+            <Suspense
+              fallback={
+                <GitHubStarsProvider stars={null}>
+                  <LayoutContent>{children}</LayoutContent>
+                </GitHubStarsProvider>
+              }
+            >
+              <GitHubStarsLoader>
+                <LayoutContent>{children}</LayoutContent>
+              </GitHubStarsLoader>
+            </Suspense>
             <Toaster />
           </AuthProvider>
         </Provider>
       </ThemeProvider>
+      <Analytics />
+      <SpeedInsights />
     </body>
   </html>
 );

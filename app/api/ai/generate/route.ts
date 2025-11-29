@@ -171,6 +171,15 @@ Node structure:
   }
 }
 
+NODE POSITIONING RULES:
+- Nodes are squares, so use equal spacing in both directions
+- Horizontal spacing between sequential nodes: 250px (e.g., x: 100, then x: 350, then x: 600)
+- Vertical spacing for parallel branches: 250px (e.g., y: 75, y: 325, y: 575)
+- Start trigger node at position {"x": 100, "y": 200}
+- For linear workflows: increment x by 250 for each subsequent node, keep y constant
+- For branching workflows: keep x the same for parallel branches, space y by 250px per branch
+- When adding nodes to existing workflows, position new nodes 250px away from existing nodes
+
 Trigger types:
 - Manual: {"triggerType": "Manual"}
 - Webhook: {"triggerType": "Webhook", "webhookPath": "/webhooks/name", ...}
@@ -182,11 +191,13 @@ Action types:
 - Create Ticket: {"actionType": "Create Ticket", "ticketTitle": "Title", "ticketDescription": "Description", "ticketPriority": "2"}
 - Database Query: {"actionType": "Database Query", "dbQuery": "SELECT * FROM table", "dbTable": "table"}
 - HTTP Request: {"actionType": "HTTP Request", "httpMethod": "POST", "endpoint": "https://api.example.com", "httpHeaders": "{}", "httpBody": "{}"}
-- Generate Text: {"actionType": "Generate Text", "aiModel": "gpt-5", "aiFormat": "text", "aiPrompt": "Your prompt here"}
-- Generate Image: {"actionType": "Generate Image", "imageModel": "bfl/flux-2-pro", "imagePrompt": "Image description"}
+- Generate Text: {"actionType": "Generate Text", "aiModel": "meta/llama-4-scout", "aiFormat": "text", "aiPrompt": "Your prompt here"}
+- Generate Image: {"actionType": "Generate Image", "imageModel": "google/imagen-4.0-generate", "imagePrompt": "Image description"}
 - Scrape: {"actionType": "Scrape", "url": "https://example.com"}
 - Search: {"actionType": "Search", "query": "search query", "limit": 10}
 - Condition: {"actionType": "Condition", "condition": "{{@nodeId:Label.field}} === 'value'"}
+- Create Chat (v0): {"actionType": "Create Chat", "message": "Create a line graph showing DAU over time", "system": "You are an expert coder"} - Use v0 for generating UI components, visualizations (charts, graphs, dashboards), landing pages, or any React/Next.js code. PREFER v0 over Generate Text/Image for any visual output like charts, graphs, or UI.
+- Send Message (v0): {"actionType": "Send Message", "chatId": "{{@nodeId:Label.chatId}}", "message": "Add dark mode"} - Use this to continue a v0 chat conversation
 
 CRITICAL ABOUT CONDITION NODES:
 - Condition nodes evaluate a boolean expression
@@ -219,12 +230,21 @@ WORKFLOW FLOW:
 - For linear workflows: trigger -> action1 -> action2 -> etc
 - For branching (conditions): one source can connect to multiple targets
 
-Example output:
+Example output (linear workflow with 250px horizontal spacing):
 {"op": "setName", "name": "Contact Form Workflow"}
 {"op": "setDescription", "description": "Processes contact form submissions"}
 {"op": "addNode", "node": {"id": "trigger-1", "type": "trigger", "position": {"x": 100, "y": 200}, "data": {"label": "Contact Form", "type": "trigger", "config": {"triggerType": "Manual"}, "status": "idle"}}}
-{"op": "addNode", "node": {"id": "send-email", "type": "action", "position": {"x": 400, "y": 200}, "data": {"label": "Send Email", "type": "action", "config": {"actionType": "Send Email", "emailTo": "admin@example.com", "emailSubject": "New Contact", "emailBody": "New contact form submission"}, "status": "idle"}}}
+{"op": "addNode", "node": {"id": "send-email", "type": "action", "position": {"x": 350, "y": 200}, "data": {"label": "Send Email", "type": "action", "config": {"actionType": "Send Email", "emailTo": "admin@example.com", "emailSubject": "New Contact", "emailBody": "New contact form submission"}, "status": "idle"}}}
+{"op": "addNode", "node": {"id": "log-action", "type": "action", "position": {"x": 600, "y": 200}, "data": {"label": "Log Result", "type": "action", "config": {"actionType": "HTTP Request", "httpMethod": "POST", "endpoint": "https://api.example.com/log"}, "status": "idle"}}}
 {"op": "addEdge", "edge": {"id": "e1", "source": "trigger-1", "target": "send-email", "type": "default"}}
+{"op": "addEdge", "edge": {"id": "e2", "source": "send-email", "target": "log-action", "type": "default"}}
+
+Example output (branching workflow with 250px vertical spacing):
+{"op": "addNode", "node": {"id": "trigger-1", "type": "trigger", "position": {"x": 100, "y": 200}, "data": {"label": "Webhook", "type": "trigger", "config": {"triggerType": "Webhook"}, "status": "idle"}}}
+{"op": "addNode", "node": {"id": "branch-a", "type": "action", "position": {"x": 350, "y": 75}, "data": {"label": "Branch A", "type": "action", "config": {"actionType": "Send Email"}, "status": "idle"}}}
+{"op": "addNode", "node": {"id": "branch-b", "type": "action", "position": {"x": 350, "y": 325}, "data": {"label": "Branch B", "type": "action", "config": {"actionType": "Send Slack Message"}, "status": "idle"}}}
+{"op": "addEdge", "edge": {"id": "e1", "source": "trigger-1", "target": "branch-a", "type": "default"}}
+{"op": "addEdge", "edge": {"id": "e2", "source": "trigger-1", "target": "branch-b", "type": "default"}}
 
 REMEMBER: After adding all nodes, you MUST add edges to connect them! Every node should be reachable from the trigger.`;
 
@@ -300,6 +320,7 @@ IMPORTANT: Output ONLY the operations needed to make the requested changes.
 - When connecting nodes, look at the node IDs in the current workflow list above
 - DO NOT output operations for existing nodes/edges unless specifically modifying them
 - Keep the existing workflow structure and only add/modify/remove what was requested
+- POSITIONING: When adding new nodes, look at existing node positions and place new nodes 250px away (horizontally or vertically) from existing nodes. Never overlap nodes.
 
 Example: If user says "connect node A to node B", output:
 {"op": "addEdge", "edge": {"id": "e-new", "source": "A", "target": "B", "type": "default"}}`;

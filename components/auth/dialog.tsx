@@ -320,7 +320,7 @@ const useAuthHandlers = (options: AuthHandlersOptions): UseAuthHandlers => {
   ) => {
     try {
       setLoadingProvider(provider);
-      await signIn.social({ provider, callbackURL: "/" });
+      await signIn.social({ provider, callbackURL: window.location.pathname });
     } catch {
       toast.error(`Failed to sign in with ${getProviderLabel(provider)}`);
       setLoadingProvider(null);
@@ -401,17 +401,33 @@ type SingleProviderButtonProps = {
   onSignIn: (provider: "github" | "google" | "vercel") => Promise<void>;
 };
 
+// Module-level flag to persist sign-in loading state across component remounts
+// This prevents the flash of normal state when OAuth triggers session refresh
+let singleProviderSignInInitiated = false;
+
+export const isSingleProviderSignInInitiated = () =>
+  singleProviderSignInInitiated;
+
 const SingleProviderButton = ({
   provider,
   loadingProvider,
   onSignIn,
 }: SingleProviderButtonProps) => {
-  const isLoading = loadingProvider === provider;
+  // Use state to trigger re-renders, but sync with module-level flag
+  const [isInitiated, setIsInitiated] = useState(singleProviderSignInInitiated);
+  const isLoading = loadingProvider === provider || isInitiated;
+
+  const handleClick = () => {
+    singleProviderSignInInitiated = true;
+    setIsInitiated(true);
+    onSignIn(provider as "github" | "google" | "vercel");
+  };
+
   return (
     <Button
-      className="h-9 gap-1.5 px-2 sm:px-3"
-      disabled={loadingProvider !== null}
-      onClick={() => onSignIn(provider as "github" | "google" | "vercel")}
+      className="h-9 gap-1.5 px-2 disabled:opacity-100 sm:px-3"
+      disabled={isLoading}
+      onClick={handleClick}
       size="sm"
       variant="default"
     >

@@ -11,6 +11,7 @@ export type WorkflowNodeData = {
   type: WorkflowNodeType;
   config?: Record<string, unknown>;
   status?: "idle" | "running" | "success" | "error";
+  enabled?: boolean; // Whether the step is enabled (defaults to true)
   onClick?: () => void; // For the "add" node type
 };
 
@@ -37,6 +38,14 @@ export const isPanelAnimatingAtom = atom<boolean>(false);
 export const hasSidebarBeenShownAtom = atom<boolean>(false);
 export const isSidebarCollapsedAtom = atom<boolean>(false);
 export const isTransitioningFromHomepageAtom = atom<boolean>(false);
+
+// Tracks nodes that are pending integration auto-select check
+// Don't show "missing integration" warning for these nodes
+export const pendingIntegrationNodesAtom = atom<Set<string>>(new Set<string>());
+
+// Trigger execute atom - set to true to trigger workflow execution
+// This allows keyboard shortcuts to trigger the same execute flow as the button
+export const triggerExecuteAtom = atom(false);
 
 // Execution log entry type for storing run outputs per node
 export type ExecutionLogEntry = {

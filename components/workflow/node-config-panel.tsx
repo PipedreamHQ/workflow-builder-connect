@@ -2,12 +2,14 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
   Copy,
   Eraser,
+  Eye,
+  EyeOff,
   FileCode,
   MenuIcon,
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -24,6 +26,7 @@ import { CodeEditor } from "@/components/ui/code-editor";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api-client";
+import type { IntegrationType } from "@/lib/db/integrations";
 import { generateWorkflowCode } from "@/lib/workflow-codegen";
 import {
   clearNodeStatusesAtom,
@@ -35,6 +38,7 @@ import {
   edgesAtom,
   isGeneratingAtom,
   nodesAtom,
+  pendingIntegrationNodesAtom,
   propertiesPanelActiveTabAtom,
   selectedEdgeAtom,
   selectedNodeAtom,
@@ -42,6 +46,7 @@ import {
   showDeleteDialogAtom,
   updateNodeDataAtom,
 } from "@/lib/workflow-store";
+import { findActionById } from "@/plugins";
 import { Panel } from "../ai-elements/panel";
 import { IntegrationsDialog } from "../settings/integrations-dialog";
 import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
@@ -49,7 +54,7 @@ import { IntegrationSelector } from "../ui/integration-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ActionConfig } from "./config/action-config";
 import { ActionGrid } from "./config/action-grid";
-import { ConditionConfig } from "./config/condition-config";
+
 import { TriggerConfig } from "./config/trigger-config";
 import { generateNodeCode } from "./utils/code-generators";
 import { WorkflowRuns } from "./workflow-runs";
@@ -57,6 +62,11 @@ import { WorkflowRuns } from "./workflow-runs";
 // Regex constants
 const NON_ALPHANUMERIC_REGEX = /[^a-zA-Z0-9\s]/g;
 const WORD_SPLIT_REGEX = /\s+/;
+
+// System actions that need integrations (not in plugin registry)
+const SYSTEM_ACTION_INTEGRATIONS: Record<string, IntegrationType> = {
+  "Database Query": "database",
+};
 
 // Multi-selection panel component
 const MultiSelectionPanel = ({
@@ -150,6 +160,7 @@ export const PanelInner = () => {
   const setShowClearDialog = useSetAtom(showClearDialogAtom);
   const setShowDeleteDialog = useSetAtom(showDeleteDialogAtom);
   const clearNodeStatuses = useSetAtom(clearNodeStatusesAtom);
+  const setPendingIntegrationNodes = useSetAtom(pendingIntegrationNodesAtom);
   const [showDeleteNodeAlert, setShowDeleteNodeAlert] = useState(false);
   const [showDeleteEdgeAlert, setShowDeleteEdgeAlert] = useState(false);
   const [showDeleteRunsAlert, setShowDeleteRunsAlert] = useState(false);
@@ -157,6 +168,9 @@ export const PanelInner = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useAtom(propertiesPanelActiveTabAtom);
   const refreshRunsRef = useRef<(() => Promise<void>) | null>(null);
+  const autoSelectAbortControllersRef = useRef<Record<string, AbortController>>(
+    {}
+  );
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
   const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
 
@@ -203,6 +217,16 @@ export const PanelInner = () => {
     }
   };
 
+  const handleToggleEnabled = () => {
+    if (selectedNode) {
+      const currentEnabled = selectedNode.data.enabled ?? true;
+      updateNodeData({
+        id: selectedNode.id,
+        data: { enabled: !currentEnabled },
+      });
+    }
+  };
+
   const handleDeleteEdge = () => {
     if (selectedEdgeId) {
       deleteEdge(selectedEdgeId);
@@ -238,19 +262,99 @@ export const PanelInner = () => {
       updateNodeData({ id: selectedNode.id, data: { description } });
     }
   };
+  const autoSelectIntegration = useCallback(
+    async (
+      nodeId: string,
+      actionType: string,
+      currentConfig: Record<string, unknown>,
+      abortSignal: AbortSignal
+    ) => {
+      // Get integration type - check plugin registry first, then system actions
+      const action = findActionById(actionType);
+      const integrationType: IntegrationType | undefined =
+        (action?.integration as IntegrationType | undefined) ||
+        SYSTEM_ACTION_INTEGRATIONS[actionType];
+
+      if (!integrationType) {
+        // No integration needed, remove from pending
+        setPendingIntegrationNodes((prev: Set<string>) => {
+          const next = new Set(prev);
+          next.delete(nodeId);
+          return next;
+        });
+        return;
+      }
+
+      try {
+        const all = await api.integration.getAll();
+
+        // Check if this operation was aborted (actionType changed)
+        if (abortSignal.aborted) {
+          return;
+        }
+
+        const filtered = all.filter((i) => i.type === integrationType);
+
+        // Auto-select if only one integration exists
+        if (filtered.length === 1 && !abortSignal.aborted) {
+          const newConfig = {
+            ...currentConfig,
+            actionType,
+            integrationId: filtered[0].id,
+          };
+          updateNodeData({ id: nodeId, data: { config: newConfig } });
+        }
+      } catch (error) {
+        console.error("Failed to auto-select integration:", error);
+      } finally {
+        // Always remove from pending set when done (unless aborted)
+        if (!abortSignal.aborted) {
+          setPendingIntegrationNodes((prev: Set<string>) => {
+            const next = new Set(prev);
+            next.delete(nodeId);
+            return next;
+          });
+        }
+      }
+    },
+    [updateNodeData, setPendingIntegrationNodes]
+  );
 
   const handleUpdateConfig = (key: string, value: string) => {
     if (selectedNode) {
-      const newConfig = { ...selectedNode.data.config, [key]: value };
-      updateNodeData({ id: selectedNode.id, data: { config: newConfig } });
-    }
-  };
+      let newConfig = { ...selectedNode.data.config, [key]: value };
 
-  // Batch update multiple config values at once to avoid race conditions
-  const handleUpdateConfigBatch = (updates: Record<string, string>) => {
-    if (selectedNode) {
-      const newConfig = { ...selectedNode.data.config, ...updates };
+      // When action type changes, clear the integrationId since it may not be valid for the new action
+      if (key === "actionType" && selectedNode.data.config?.integrationId) {
+        newConfig = { ...newConfig, integrationId: undefined };
+      }
+
       updateNodeData({ id: selectedNode.id, data: { config: newConfig } });
+
+      // When action type changes, auto-select integration if only one exists
+      if (key === "actionType") {
+        // Cancel any pending auto-select operation for this node
+        const existingController =
+          autoSelectAbortControllersRef.current[selectedNode.id];
+        if (existingController) {
+          existingController.abort();
+        }
+
+        // Create new AbortController for this operation
+        const newController = new AbortController();
+        autoSelectAbortControllersRef.current[selectedNode.id] = newController;
+
+        // Add to pending set before starting async check
+        setPendingIntegrationNodes((prev: Set<string>) =>
+          new Set(prev).add(selectedNode.id)
+        );
+        autoSelectIntegration(
+          selectedNode.id,
+          value,
+          newConfig,
+          newController.signal
+        );
+      }
     }
   };
 
@@ -561,7 +665,7 @@ export const PanelInner = () => {
           className="flex flex-col overflow-hidden"
           value="properties"
         >
-          <div className="node-config-scroll flex-1 space-y-4 overflow-y-auto p-4">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {selectedNode.data.type === "trigger" && (
               <TriggerConfig
                 config={selectedNode.data.config || {}}
@@ -578,38 +682,15 @@ export const PanelInner = () => {
                 onSelectAction={(actionType) =>
                   handleUpdateConfig("actionType", actionType)
                 }
-                onSelectPipedreamApp={(app) => {
-                  // Pre-fill Pipedream action with selected app using batch update
-                  handleUpdateConfigBatch({
-                    actionType: "Pipedream Action",
-                    pipedreamApp: app.nameSlug,
-                    pipedreamAppName: app.name,
-                    pipedreamAppLogo: app.imgSrc || "",
-                    pipedreamComponentKey: "",
-                    pipedreamConfiguredProps: JSON.stringify({}),
-                  });
-                }}
               />
             ) : null}
 
             {selectedNode.data.type === "action" &&
-            selectedNode.data.config?.actionType === "Condition" ? (
-              <ConditionConfig
-                config={selectedNode.data.config || {}}
-                disabled={isGenerating}
-                onUpdateConfig={handleUpdateConfig}
-              />
-            ) : null}
-
-            {selectedNode.data.type === "action" &&
-            selectedNode.data.config?.actionType &&
-            selectedNode.data.config?.actionType !== "Condition" ? (
+            selectedNode.data.config?.actionType ? (
               <ActionConfig
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
                 onUpdateConfig={handleUpdateConfig}
-                onUpdateLabel={handleUpdateLabel}
-                onUpdateDescription={handleUpdateDescription}
               />
             ) : null}
 
@@ -645,37 +726,56 @@ export const PanelInner = () => {
           </div>
           {selectedNode.data.type === "action" && (
             <div className="flex shrink-0 items-center justify-between border-t p-4">
-              <Button
-                onClick={() => setShowDeleteNodeAlert(true)}
-                size="sm"
-                variant="ghost"
-              >
-                <Trash2 className="mr-2 size-4" />
-                Delete Step
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleToggleEnabled}
+                  size="icon"
+                  title={
+                    selectedNode.data.enabled === false
+                      ? "Enable Step"
+                      : "Disable Step"
+                  }
+                  variant="ghost"
+                >
+                  {selectedNode.data.enabled === false ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </Button>
+                <Button
+                  onClick={() => setShowDeleteNodeAlert(true)}
+                  size="icon"
+                  variant="ghost"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
 
               {(() => {
                 const actionType = selectedNode.data.config
                   ?.actionType as string;
-                const integrationMap = {
-                  "Send Email": "resend",
-                  "Send Slack Message": "slack",
-                  "Create Ticket": "linear",
-                  "Find Issues": "linear",
-                  "Generate Text": "ai-gateway",
-                  "Generate Image": "ai-gateway",
-                  "Database Query": "database",
-                  Scrape: "firecrawl",
-                  Search: "firecrawl",
-                } as const;
 
-                const integrationType =
-                  actionType &&
-                  integrationMap[actionType as keyof typeof integrationMap];
+                // Database Query is special - has integration but no plugin
+                const SYSTEM_INTEGRATION_MAP: Record<string, string> = {
+                  "Database Query": "database",
+                };
+
+                // Get integration type dynamically
+                let integrationType: string | undefined;
+                if (actionType) {
+                  if (SYSTEM_INTEGRATION_MAP[actionType]) {
+                    integrationType = SYSTEM_INTEGRATION_MAP[actionType];
+                  } else {
+                    // Look up from plugin registry
+                    const action = findActionById(actionType);
+                    integrationType = action?.integration;
+                  }
+                }
 
                 return integrationType ? (
                   <IntegrationSelector
-                    integrationType={integrationType}
+                    integrationType={integrationType as IntegrationType}
                     label="Integration"
                     onChange={(id) => handleUpdateConfig("integrationId", id)}
                     onOpenSettings={() => setShowIntegrationsDialog(true)}

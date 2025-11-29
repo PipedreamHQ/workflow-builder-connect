@@ -34,6 +34,7 @@ import {
   nodesAtom,
   onEdgesChangeAtom,
   onNodesChangeAtom,
+  propertiesPanelActiveTabAtom,
   rightPanelWidthAtom,
   selectedEdgeAtom,
   selectedNodeAtom,
@@ -95,6 +96,7 @@ export function WorkflowCanvas() {
   const addNode = useSetAtom(addNodeAtom);
   const setHasUnsavedChanges = useSetAtom(hasUnsavedChangesAtom);
   const triggerAutosave = useSetAtom(autosaveAtom);
+  const setActiveTab = useSetAtom(propertiesPanelActiveTabAtom);
   const { screenToFlowPosition, fitView, getViewport, setViewport } =
     useReactFlow();
 
@@ -199,6 +201,22 @@ export function WorkflowCanvas() {
       hadRealNodesRef.current = false;
     }
   }, [currentWorkflowId, hasRealNodes, fitView]);
+
+  // Keyboard shortcut for fit view (Cmd+/ or Ctrl+/)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Cmd+/ (Mac) or Ctrl+/ (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === "/") {
+        event.preventDefault();
+        fitView({ padding: 0.2, duration: 300 });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [fitView]);
 
   const nodeTypes = useMemo(
     () => ({
@@ -353,6 +371,7 @@ export function WorkflowCanvas() {
 
         addNode(newNode);
         setSelectedNode(newNode.id);
+        setActiveTab("properties");
 
         // Deselect all other nodes and select only the new node
         // Need to do this after a delay because panOnDrag will clear selection
@@ -395,6 +414,7 @@ export function WorkflowCanvas() {
       setEdges,
       setNodes,
       setSelectedNode,
+      setActiveTab,
       setHasUnsavedChanges,
       triggerAutosave,
     ]
@@ -425,8 +445,6 @@ export function WorkflowCanvas() {
     },
     [setSelectedNode]
   );
-
-  console.log("[Viewport] Render", { currentWorkflowId, isCanvasReady });
 
   return (
     <div

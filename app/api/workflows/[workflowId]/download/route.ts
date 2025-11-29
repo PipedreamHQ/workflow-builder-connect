@@ -162,8 +162,6 @@ function getIntegrationDependencies(
       deps.zod = "^4.1.12";
     } else if (actionType === "Scrape" || actionType === "Search") {
       deps["@mendable/firecrawl-js"] = "^4.6.2";
-    } else if (actionType === "Pipedream Action") {
-      deps["@pipedream/sdk"] = "^2.3.0";
     }
   }
 
@@ -261,7 +259,7 @@ export default withWorkflow(nextConfig);
     // Add a README with instructions
     allFiles["README.md"] = `# ${workflow.name}
 
-This is a Next.js workflow project generated from V8 Workflow.
+This is a Next.js workflow project generated from Workflow Builder.
 
 ## Getting Started
 
@@ -325,12 +323,6 @@ DATABASE_URL=your_database_url
 
 # For Firecrawl integration
 FIRECRAWL_API_KEY=your_firecrawl_api_key
-
-# For Pipedream Connect integration
-PIPEDREAM_PROJECT_ID=your_pipedream_project_id
-PIPEDREAM_CLIENT_ID=your_pipedream_client_id
-PIPEDREAM_CLIENT_SECRET=your_pipedream_client_secret
-EXTERNAL_USER_ID=your_external_user_id
 `;
 
     return NextResponse.json({
