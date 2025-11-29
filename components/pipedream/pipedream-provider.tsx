@@ -74,22 +74,11 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
     <FrontendClientProvider client={client}>
       <CustomizeProvider
         theme={pipedreamTheme}
-        select={{
-          getProps: (_name, baseProps) => ({
-            ...baseProps,
-            menuPortalTarget:
-              typeof document !== "undefined" ? document.body : undefined,
-            menuPosition: "fixed",
-            menuPlacement: "auto",
-            menuShouldBlockScroll: false,
-          }),
-        }}
         classNames={{
           controlSubmit: ({ form }) =>
             cn(
               "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90",
-              (form?.submitting || form?.disabled) &&
-                "opacity-70 cursor-not-allowed hover:bg-primary"
+              form?.submitting && "opacity-70 cursor-not-allowed hover:bg-primary"
             ),
         }}
         styles={{
