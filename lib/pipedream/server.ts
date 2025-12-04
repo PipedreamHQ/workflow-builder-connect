@@ -91,6 +91,7 @@ export async function runPipedreamAction(opts: {
  * Check if Pipedream is configured (has required env vars).
  * Exported as async to satisfy Next.js server action constraints.
  */
+// biome-ignore lint/suspicious/useAwait: Must be async for Next.js server action
 export async function isPipedreamEnabled() {
   return isPipedreamConfigured;
 }
