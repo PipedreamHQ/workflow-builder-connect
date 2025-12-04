@@ -15,7 +15,6 @@ import type {
   DynamicProps,
 } from "@pipedream/sdk";
 import { Loader2, Play } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -308,38 +307,6 @@ export function PipedreamActionConfig({
         <SelectApp
           appsOptions={appsOptions}
           onChange={handleAppChange}
-          renderOption={(app) => (
-            <div className="flex items-center gap-2">
-              {app.imgSrc ? (
-                <Image
-                  alt={app.name}
-                  className="rounded-sm"
-                  height={24}
-                  src={app.imgSrc}
-                  unoptimized
-                  width={24}
-                />
-              ) : null}
-              <span>{app.name}</span>
-            </div>
-          )}
-          renderValue={(app) =>
-            app ? (
-              <div className="flex items-center gap-2">
-                {app.imgSrc ? (
-                  <Image
-                    alt={app.name}
-                    className="rounded-sm"
-                    height={20}
-                    src={app.imgSrc}
-                    unoptimized
-                    width={20}
-                  />
-                ) : null}
-                <span>{app.name}</span>
-              </div>
-            ) : null
-          }
           value={selectedApp}
         />
       </div>
@@ -357,38 +324,6 @@ export function PipedreamActionConfig({
             app={selectedApp}
             componentType="action"
             onChange={handleComponentChange}
-            renderOption={(component) => (
-              <div className="flex items-center gap-2">
-                {selectedApp?.imgSrc ? (
-                  <Image
-                    alt={selectedApp.name}
-                    className="rounded-sm"
-                    height={20}
-                    src={selectedApp.imgSrc}
-                    unoptimized
-                    width={20}
-                  />
-                ) : null}
-                <span>{component.name}</span>
-              </div>
-            )}
-            renderValue={(component) =>
-              component ? (
-                <div className="flex items-center gap-2">
-                  {selectedApp?.imgSrc ? (
-                    <Image
-                      alt={selectedApp.name}
-                      className="rounded-sm"
-                      height={20}
-                      src={selectedApp.imgSrc}
-                      unoptimized
-                      width={20}
-                    />
-                  ) : null}
-                  <span>{component.name}</span>
-                </div>
-              ) : null
-            }
             value={selectedComponent}
           />
         </div>
