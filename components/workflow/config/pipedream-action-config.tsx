@@ -39,6 +39,66 @@ type PipedreamActionConfigProps = {
   disabled: boolean;
 };
 
+/**
+ * Collects all keys from a ConfiguredProps object, handling Proxy objects.
+ */
+function collectPropKeys(
+  props: ConfiguredProps,
+  additionalNames: Set<string>
+): Set<string> {
+  const keys = new Set<string>();
+
+  for (const name of Object.keys(props || {})) {
+    keys.add(name);
+  }
+  for (const name of Object.getOwnPropertyNames(props || {})) {
+    keys.add(name);
+  }
+  for (const name of additionalNames) {
+    keys.add(name);
+  }
+  try {
+    for (const key of Reflect.ownKeys(props || {})) {
+      if (typeof key === "string") {
+        keys.add(key);
+      }
+    }
+  } catch {
+    // ignore reflection errors
+  }
+
+  return keys;
+}
+
+/**
+ * Serializes ConfiguredProps to a plain object, breaking any Proxy wrappers.
+ */
+function serializeProps(
+  props: ConfiguredProps,
+  propNames: Set<string>
+): Record<string, unknown> {
+  const serializable: Record<string, unknown> = {};
+  const keys = collectPropKeys(props, propNames);
+
+  for (const name of keys) {
+    try {
+      const value = (props as Record<string, unknown>)?.[name];
+      if (value !== undefined) {
+        serializable[name] = value;
+      }
+    } catch {
+      // ignore individual property read failures
+    }
+  }
+
+  // Break any Proxies before returning
+  try {
+    return JSON.parse(JSON.stringify(serializable));
+  } catch {
+    return { ...serializable };
+  }
+}
+
 export function PipedreamActionConfig({
   config,
   onUpdateConfig,
@@ -104,6 +164,65 @@ export function PipedreamActionConfig({
     componentType: "action",
   });
   const actionCount = actionsForApp?.length ?? 0;
+  const selectedComponentKey = selectedComponent?.key;
+
+  // Build a deterministic list of prop names (base + latest dynamic props)
+  const serializedPropNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const prop of selectedComponent?.configurableProps ?? []) {
+      names.add(prop.name);
+    }
+    for (const prop of latestDynamicProps?.configurableProps ?? []) {
+      names.add(prop.name);
+    }
+    return names;
+  }, [selectedComponent?.configurableProps, latestDynamicProps]);
+
+  // Persist configured props to workflow state
+  const persistConfiguredProps = useCallback(
+    (props: ConfiguredProps) => {
+      if (!selectedComponent?.key) {
+        return;
+      }
+
+      // Avoid clobbering previously saved props with an empty payload emitted
+      // before the form finishes hydrating
+      if (
+        lastSavedPropsJson.current &&
+        lastSavedPropsJson.current !== "{}" &&
+        Object.keys(props || {}).length === 0
+      ) {
+        return;
+      }
+
+      const plainProps = serializeProps(props, serializedPropNames);
+      const json = JSON.stringify(plainProps);
+
+      const shouldUpdateProps = json !== lastSavedPropsJson.current;
+      const shouldUpdateKey =
+        selectedComponent.key !== lastSavedComponentKey.current;
+
+      if (shouldUpdateProps) {
+        lastSavedPropsJson.current = json;
+        onUpdateConfig("pipedreamConfiguredProps", json);
+        // Also save the external user ID that owns these props
+        if (externalUserId && externalUserId !== "anonymous") {
+          onUpdateConfig("pipedreamExternalUserId", externalUserId);
+        }
+      }
+
+      if (shouldUpdateKey) {
+        lastSavedComponentKey.current = selectedComponent.key;
+        onUpdateConfig("pipedreamComponentKey", selectedComponent.key);
+      }
+    },
+    [
+      externalUserId,
+      onUpdateConfig,
+      selectedComponent?.key,
+      serializedPropNames,
+    ]
+  );
 
   // Handle app selection
   const handleAppChange = useCallback(
@@ -129,6 +248,7 @@ export function PipedreamActionConfig({
       setSelectedComponent(component);
       // Reset props when component changes
       setConfiguredProps({});
+      persistConfiguredProps({});
 
       // Sync to workflow state
       onUpdateConfig("pipedreamComponentKey", component?.key || "");
@@ -149,6 +269,7 @@ export function PipedreamActionConfig({
       onUpdateDescription,
       selectedApp?.name,
       config?.pipedreamAppName,
+      persistConfiguredProps,
     ]
   );
 
@@ -180,101 +301,22 @@ export function PipedreamActionConfig({
     }
   }, [selectedComponent?.key, configuredProps, externalUserId]);
 
-  // Build a deterministic list of prop names (base + latest dynamic props)
-  const serializedPropNames = useMemo(() => {
-    const names = new Set<string>();
-    for (const prop of selectedComponent?.configurableProps ?? []) {
-      names.add(prop.name);
-    }
-    for (const prop of latestDynamicProps?.configurableProps ?? []) {
-      names.add(prop.name);
-    }
-    return names;
-  }, [selectedComponent?.configurableProps, latestDynamicProps]);
-
   // Persist configured props when they change (one-way sync to store)
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex prop serialization logic is necessary
   useEffect(() => {
-    if (!selectedComponent?.key) {
+    if (!selectedComponentKey) {
       return;
     }
+    persistConfiguredProps(configuredProps || {});
+  }, [configuredProps, persistConfiguredProps, selectedComponentKey]);
 
-    const props = configuredProps || {};
-    const serializable: Record<string, unknown> = {};
-
-    // Collect every key we can discover
-    const keyCandidates = new Set<string>();
-    for (const name of Object.keys(props || {})) {
-      keyCandidates.add(name);
-    }
-    for (const name of Object.getOwnPropertyNames(props || {})) {
-      keyCandidates.add(name);
-    }
-    for (const name of serializedPropNames) {
-      keyCandidates.add(name);
-    }
-    try {
-      for (const key of Reflect.ownKeys(props || {})) {
-        if (typeof key === "string") {
-          keyCandidates.add(key);
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    // Pull values by key
-    for (const name of keyCandidates) {
-      try {
-        // biome-ignore lint/suspicious/noExplicitAny: ConfiguredProps proxy requires dynamic access
-        const value = (props as any)?.[name];
-        if (value !== undefined) {
-          serializable[name] = value;
-        }
-      } catch {
-        // ignore individual property read failures
-      }
-    }
-
-    // Break any Proxies before persisting to workflow JSON
-    let plainProps: Record<string, unknown> = serializable;
-    try {
-      plainProps = JSON.parse(JSON.stringify(serializable));
-    } catch {
-      plainProps = { ...serializable };
-    }
-
-    const json = JSON.stringify(plainProps);
-
-    const shouldUpdateProps = json !== lastSavedPropsJson.current;
-    const shouldUpdateKey =
-      selectedComponent.key !== lastSavedComponentKey.current;
-
-    if (shouldUpdateProps) {
-      lastSavedPropsJson.current = json;
-      onUpdateConfig("pipedreamConfiguredProps", json);
-    }
-
-    if (shouldUpdateKey) {
-      lastSavedComponentKey.current = selectedComponent.key;
-      onUpdateConfig("pipedreamComponentKey", selectedComponent.key);
-    }
-  }, [
-    configuredProps,
-    onUpdateConfig,
-    selectedComponent?.key,
-    serializedPropNames,
-  ]);
-
-  // Sync initial values from config on mount
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Initial sync logic with multiple conditions
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally run only on mount
+  // Sync values from config whenever they change (handles node switches and refresh)
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Controlled hydration for Pipedream state
   useEffect(() => {
     const nameSlug = config?.pipedreamApp as string | undefined;
     const key = config?.pipedreamComponentKey as string | undefined;
     const storedProps = config?.pipedreamConfiguredProps;
 
-    if (nameSlug && !selectedApp) {
+    if (nameSlug && (!selectedApp || selectedApp.nameSlug !== nameSlug)) {
       setSelectedApp({
         nameSlug,
         name: (config?.pipedreamAppName as string) || nameSlug,
@@ -283,8 +325,11 @@ export function PipedreamActionConfig({
         featuredWeight: 0,
       } as App);
     }
-    if (key && !selectedComponent) {
-      setSelectedComponent({ key } as Component);
+    if (key && (!selectedComponent || selectedComponent.key !== key)) {
+      setSelectedComponent({
+        key,
+        name: (config?.pipedreamComponentName as string) || key,
+      } as Component);
     }
     if (storedProps) {
       const props =
@@ -295,7 +340,16 @@ export function PipedreamActionConfig({
         setConfiguredProps(props);
       }
     }
-  }, []);
+  }, [
+    config?.pipedreamApp,
+    config?.pipedreamAppLogo,
+    config?.pipedreamAppName,
+    config?.pipedreamComponentKey,
+    config?.pipedreamComponentName,
+    config?.pipedreamConfiguredProps,
+    selectedApp,
+    selectedComponent,
+  ]);
 
   return (
     <div className="pipedream-config space-y-4" ref={containerRef}>
@@ -340,7 +394,10 @@ export function PipedreamActionConfig({
               externalUserId={externalUserId}
               hideOptionalProps={false}
               key={selectedComponent.key}
-              onUpdateConfiguredProps={setConfiguredProps}
+              onUpdateConfiguredProps={(props) => {
+                setConfiguredProps(props);
+                persistConfiguredProps(props);
+              }}
               onUpdateDynamicProps={setLatestDynamicProps}
             />
           </div>

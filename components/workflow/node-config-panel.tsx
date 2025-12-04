@@ -320,8 +320,12 @@ export const PanelInner = () => {
     [updateNodeData, setPendingIntegrationNodes]
   );
 
-  const handleUpdateConfig = (key: string, value: string) => {
-    if (selectedNode) {
+  const handleUpdateConfig = useCallback(
+    (key: string, value: string) => {
+      if (!selectedNode) {
+        return;
+      }
+
       let newConfig = { ...selectedNode.data.config, [key]: value };
 
       // When action type changes, clear the integrationId since it may not be valid for the new action
@@ -355,8 +359,14 @@ export const PanelInner = () => {
           newController.signal
         );
       }
-    }
-  };
+    },
+    [
+      autoSelectIntegration,
+      selectedNode,
+      setPendingIntegrationNodes,
+      updateNodeData,
+    ]
+  );
 
   const handleUpdateWorkspaceName = async (newName: string) => {
     setCurrentWorkflowName(newName);

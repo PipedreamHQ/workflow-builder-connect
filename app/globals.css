@@ -446,11 +446,21 @@
 }
 
 .dark .react-select__option--is-focused,
-.dark .pipedream-config [class$="-option"]:hover {
-  background: var(--accent) !important;
+.dark .react-select__option:hover,
+.dark .pipedream-config [class$="-option"]:hover,
+.dark .pipedream-config [class$="-option"][class*="focused"] {
+  background: oklch(0.25 0 0) !important;
+  color: var(--foreground) !important;
 }
 
 .dark .react-select__option--is-selected {
-  background: var(--primary) !important;
-  color: var(--primary-foreground) !important;
+  background: oklch(0.3 0 0) !important;
+  color: var(--foreground) !important;
+  font-weight: 500 !important;
+}
+
+.dark .react-select__option--is-selected:hover,
+.dark .react-select__option--is-selected.react-select__option--is-focused {
+  background: oklch(0.35 0 0) !important;
+  color: var(--foreground) !important;
 }
