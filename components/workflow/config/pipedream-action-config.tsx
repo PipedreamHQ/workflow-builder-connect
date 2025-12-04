@@ -4,6 +4,7 @@ import {
   ComponentFormContainer,
   SelectApp,
   SelectComponent,
+  useComponents,
 } from "@pipedream/connect-react";
 import type {
   App,
@@ -93,6 +94,13 @@ export function PipedreamActionConfig({
   // Test execution state
   const [isTesting, setIsTesting] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Get action count for selected app
+  const { components: actionsForApp } = useComponents({
+    app: selectedApp?.nameSlug,
+    componentType: "action",
+  });
+  const actionCount = actionsForApp?.length ?? 0;
 
   // Handle app selection
   const handleAppChange = useCallback(
@@ -273,52 +281,57 @@ export function PipedreamActionConfig({
 
       {/* App Selection */}
       <div className="space-y-2">
-        <Label className="ml-1">Select App</Label>
-        <div className="rounded-lg border bg-card p-2">
-          <SelectApp
-            appsOptions={appsOptions}
-            onChange={handleAppChange}
-            renderOption={(app) => (
+        <Label className="ml-1">
+          Select app <span className="text-muted-foreground">(3,000+)</span>
+        </Label>
+        <SelectApp
+          appsOptions={appsOptions}
+          onChange={handleAppChange}
+          renderOption={(app) => (
+            <div className="flex items-center gap-2">
+              {app.imgSrc ? (
+                <Image
+                  alt={app.name}
+                  className="rounded-sm"
+                  height={24}
+                  src={app.imgSrc}
+                  unoptimized
+                  width={24}
+                />
+              ) : null}
+              <span>{app.name}</span>
+            </div>
+          )}
+          renderValue={(app) =>
+            app ? (
               <div className="flex items-center gap-2">
                 {app.imgSrc ? (
                   <Image
                     alt={app.name}
                     className="rounded-sm"
-                    height={24}
+                    height={20}
                     src={app.imgSrc}
                     unoptimized
-                    width={24}
+                    width={20}
                   />
                 ) : null}
                 <span>{app.name}</span>
               </div>
-            )}
-            renderValue={(app) =>
-              app ? (
-                <div className="flex items-center gap-2">
-                  {app.imgSrc ? (
-                    <Image
-                      alt={app.name}
-                      className="rounded-sm"
-                      height={20}
-                      src={app.imgSrc}
-                      unoptimized
-                      width={20}
-                    />
-                  ) : null}
-                  <span>{app.name}</span>
-                </div>
-              ) : null
-            }
-            value={selectedApp}
-          />
-        </div>
+            ) : null
+          }
+          value={selectedApp}
+        />
       </div>
 
       {/* Action Selection */}
       {selectedApp && (
         <div className="space-y-2">
-          <Label className="ml-1">Select Action</Label>
+          <Label className="ml-1">
+            Select action{" "}
+            {actionCount > 0 && (
+              <span className="text-muted-foreground">({actionCount})</span>
+            )}
+          </Label>
         <SelectComponent
           app={selectedApp}
           componentType="action"

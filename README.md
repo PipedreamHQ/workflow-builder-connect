@@ -1,6 +1,6 @@
 # AI Workflow Builder + Pipedream Connect
 
-This fork shows how to extend the template with [Pipedream Connect](https://pipedream.com/connect) so you can add 10,000+ actions and triggers from 3,000+ apps. Built on top of Workflow DevKit, it provides a complete visual workflow builder with real integrations and code generation capabilities. Refer to Pipedream's docs [here](https://pipedream.com/docs/connect).
+This project shows how to extend the [AI Workflow Builder Template](https://github.com/vercel-labs/workflow-builder-template) with [Pipedream Connect](https://pipedream.com/connect) so you can enable **10,000+ actions and triggers from 3,000+ apps**. Built on top of Workflow DevKit, it provides a complete visual workflow builder with real integrations and code generation capabilities. Refer to Pipedream's docs [here](https://pipedream.com/docs/connect).
 
 ![AI Workflow Builder Screenshot](screenshot.png)
 
@@ -13,14 +13,14 @@ You can deploy your own version of the workflow builder to Vercel with one click
 **What happens during deployment:**
 
 - **Automatic Database Setup**: A Neon Postgres database is automatically created and connected to your project
-- **Environment Configuration**: You'll be prompted to provide required environment variables (Better Auth credentials and AI Gateway API key)
+- **Environment Configuration**: You'll be prompted to provide required environment variables (Better Auth credentials, AI Gateway API key, and Pipedream Credentials)
 - **Ready to Use**: After deployment, you can start building workflows immediately
 
 ## What's Included
 
 - **Visual Workflow Builder** - Drag-and-drop interface powered by React Flow
 - **Workflow DevKit Integration** - Built on top of Workflow DevKit for powerful execution capabilities
-- **Real Integrations** - Connect to Resend (emails), Linear (tickets), Slack, PostgreSQL, and external APIs
+- **More than 3,000 Integrations** - Powered by Pipedream Connect, your users can easily and securely connect to Linear, Slack, Notion, production databases, and many more external APIs
 - **Code Generation** - Convert workflows to executable TypeScript with `"use workflow"` directive
 - **Execution Tracking** - Monitor workflow runs with detailed logs
 - **Authentication** - Secure user authentication with Better Auth
@@ -78,6 +78,15 @@ Visit [http://localhost:3000](http://localhost:3000) to get started.
 - Database Event
 
 ### Action Nodes
+
+#### Pipedream Actions
+
+- Choose from more than 3,000 apps with 1-click secure authentication built-in
+- More than 10,000 prebuilt actions
+- Slack, Linear, Notion, GitHub, Salesforce, and many more
+- Learn more at [pipedream.com/connect](https://pipedream.com/connect)
+
+#### Vercel Integrations
 
 - **Send Email** - Send emails via Resend
 - **Create Ticket** - Create Linear tickets
@@ -271,6 +280,7 @@ const searchResult = await firecrawlSearchStep({
 - **Code Editor**: Monaco Editor
 - **Workflow Canvas**: React Flow
 - **AI**: OpenAI GPT-5
+- **Integrations**: Pipedream Connect
 - **Type Checking**: TypeScript
 - **Code Quality**: Ultracite (formatter + linter)
 

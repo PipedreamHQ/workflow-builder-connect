@@ -42,7 +42,8 @@ const slackPlugin: IntegrationPlugin = {
 
   testConfig: {
     getTestFunction: async () => {
-      const { testSlack } = await import("./test");
+      // webpackIgnore prevents client-side bundling of this server-only module
+      const { testSlack } = await import(/* webpackIgnore: true */ "./test");
       return testSlack;
     },
   },

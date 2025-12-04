@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
     // Enable symlinks for local package development
     externalDir: true,
   },
+  transpilePackages: ["@pipedream/connect-react"],
+  serverExternalPackages: ["@slack/web-api"],
   images: {
     remotePatterns: [
       {

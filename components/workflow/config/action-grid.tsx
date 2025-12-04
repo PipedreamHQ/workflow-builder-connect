@@ -22,38 +22,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { IntegrationIcon } from "@/components/ui/integration-icon";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-
-const InlineSwitch = ({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (val: boolean) => void;
-  disabled?: boolean;
-}) => (
-  <button
-    aria-pressed={checked}
-    className={cn(
-      "relative inline-flex h-4.5 w-8 items-center rounded-full border transition-colors",
-      checked
-        ? "border-muted-foreground/40 bg-muted-foreground/15"
-        : "border-input bg-muted",
-      disabled && "cursor-not-allowed opacity-60"
-    )}
-    disabled={disabled}
-    onClick={() => onChange(!checked)}
-    type="button"
-  >
-    <span
-      className={cn(
-        "inline-block size-3.5 translate-x-[2px] rounded-full bg-card shadow transition-transform",
-        checked && "translate-x-[14px] bg-muted-foreground"
-      )}
-    />
-  </button>
-);
 
 type ActionFilterMode = "all" | "vercel";
 
@@ -265,14 +235,16 @@ export function ActionGrid({
         }}
         type="button"
       >
-        <Image
-          alt={app.name}
-          className="size-8 rounded"
-          height={32}
-          src={`https://pipedream.com/s.v0/${app.id}/logo/48`}
-          unoptimized
-          width={32}
-        />
+        <div className="flex size-8 items-center justify-center rounded-md bg-white p-1">
+          <Image
+            alt={app.name}
+            className="size-6 rounded"
+            height={24}
+            src={`https://pipedream.com/s.v0/${app.id}/logo/48`}
+            unoptimized
+            width={24}
+          />
+        </div>
         <p className="line-clamp-2 text-center font-medium text-sm">
           {app.name}
         </p>
@@ -288,15 +260,15 @@ export function ActionGrid({
             Search Actions
           </Label>
           <div className="flex items-center gap-2 font-medium text-muted-foreground text-xs">
-            <InlineSwitch
-              aria-label="Include Pipedream actions"
+            <Switch
+              aria-label="Include all actions"
               checked={actionFilterMode === "all"}
               disabled={disabled}
-              onChange={(checked) =>
+              onCheckedChange={(checked) =>
                 setActionFilterMode(checked ? "all" : "vercel")
               }
             />
-            <span>Include Pipedream actions</span>
+            <span>Include all actions</span>
             <a
               className="text-muted-foreground hover:text-foreground"
               href="https://pipedream.com/connect"
