@@ -55,6 +55,11 @@ export async function serverConnectTokenCreate(opts: {
 
   const allowedOrigins = JSON.parse(PIPEDREAM_ALLOWED_ORIGINS || "[]");
 
+  // Automatically include Vercel URL if available
+  if (process.env.VERCEL_URL) {
+    allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+  }
+
   const response = await client.tokens.create({
     externalUserId: opts.externalUserId,
     allowedOrigins,

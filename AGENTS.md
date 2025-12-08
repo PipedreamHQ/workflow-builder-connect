@@ -78,3 +78,72 @@ If any of the above commands fail or show errors:
   - `api.workflow.*` - Workflow CRUD and operations (create, update, delete, deploy, execute, etc.)
 - **No Barrel Files**: Do not create barrel/index files that re-export from other files
 
+## Pipedream Integration
+
+This project uses Pipedream Connect to integrate with 2,800+ external APIs and services.
+
+### Environment Variables
+
+Required for Pipedream functionality:
+- `PIPEDREAM_CLIENT_ID` - OAuth client ID from pipedream.com/settings/api
+- `PIPEDREAM_CLIENT_SECRET` - OAuth client secret
+- `PIPEDREAM_PROJECT_ID` - Project ID (proj_xxxxxxx) from pipedream.com/projects
+- `PIPEDREAM_PROJECT_ENVIRONMENT` - `development` or `production`
+- `PIPEDREAM_ALLOWED_ORIGINS` - JSON array of allowed origins (optional if deploying to Vercel)
+
+### Architecture
+
+**Backend (`lib/pipedream/server.ts`)**:
+- Uses `@pipedream/sdk` with `PipedreamClient`
+- Provides `serverConnectTokenCreate()` for frontend authentication
+- Provides `runPipedreamAction()` for executing actions during workflow runs
+- Automatically includes `VERCEL_URL` in allowed origins when deployed
+
+**Frontend (`components/pipedream/pipedream-provider.tsx`)**:
+- Uses `@pipedream/sdk/browser` with `createFrontendClient`
+- Uses `@pipedream/connect-react` for pre-built UI components
+- `FrontendClientProvider` wraps the app to provide Pipedream context
+- `CustomizeProvider` applies shadcn/ui theme to Pipedream components
+
+### Key SDK Methods
+
+```typescript
+// Backend: Generate connect token
+const token = await client.tokens.create({
+  externalUserId: "user123",
+  allowedOrigins: ["https://your-app.com"]
+});
+
+// Backend: Execute action
+const result = await client.actions.run({
+  id: "slack-send-message-to-channel",
+  externalUserId: "user123",
+  configuredProps: {
+    slack: { authProvisionId: "apn_abc123" },
+    channel: "#general",
+    text: "Hello!"
+  }
+});
+
+// Frontend: Create client with token callback
+const client = createFrontendClient({
+  externalUserId: "user123",
+  tokenCallback: async ({ externalUserId }) => {
+    return serverConnectTokenCreate({ externalUserId });
+  }
+});
+```
+
+### Connect React Components
+
+Use these components from `@pipedream/connect-react`:
+- `FrontendClientProvider` - Wraps app to provide client context
+- `CustomizeProvider` - Applies theme customization
+- `ComponentFormContainer` - Pre-built form for configuring and running actions
+
+### Documentation
+
+- Main docs: https://pipedream.com/docs/connect
+- API reference: https://pipedream.com/docs/connect/api-reference
+- Component registry: https://github.com/PipedreamHQ/pipedream/tree/master/components
+
