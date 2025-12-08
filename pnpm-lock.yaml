@@ -21,11 +21,11 @@ importers:
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@pipedream/connect-react':
-        specifier: ^2.1.2
-        version: 2.1.2(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@pipedream/sdk':
         specifier: ^2.3.0
-        version: 2.3.0
+        version: 2.3.0(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@pipedream/sdk':
+        specifier: ^2.3.2
+        version: 2.3.2
       '@radix-ui/react-context-menu':
         specifier: ^2.2.16
         version: 2.2.16(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1176,14 +1176,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@pipedream/connect-react@2.1.2':
-    resolution: {integrity: sha512-HYGSm4pAvK2n9NRiHH/F0hTYbi+lsxa8H9SxY7pL6tLZRhntT6doNquJ6MBap31Nmuyv5tJZ0yTzXU7hWF0eRw==}
+  '@pipedream/connect-react@2.3.0':
+    resolution: {integrity: sha512-LfNE5CatHsRv/8DPd3XBUo7Ej5RpC6BbzPyDOonWGVwJLCO8iq1EzFsbogWnJD80CHu3PI+bUnDdF2d4kVBTzQ==}
     peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@pipedream/sdk@2.3.0':
-    resolution: {integrity: sha512-UqG2OZUUj0t3r7wqUMUiML0FryG8kp4apkNVMc7l4dgeVvt/4FaUEEzJWY/2koKB5o5bSF0LLgPFujBehQdILg==}
+  '@pipedream/sdk@2.3.2':
+    resolution: {integrity: sha512-VVJWIK5hkvp/cca+8BPU9Wg3VahVtB29AxEY9yLup7+4ehfWUxz+NM3G8JqreTAkp9C5d7avXRaI+xx4kZzWbA==}
     engines: {node: '>=18.0.0'}
 
   '@radix-ui/number@1.1.1':
@@ -5972,9 +5972,9 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.14.0':
     optional: true
 
-  '@pipedream/connect-react@2.1.2(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@pipedream/connect-react@2.3.0(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@pipedream/sdk': 2.3.0
+      '@pipedream/sdk': 2.3.2
       '@tanstack/react-query': 5.90.11(react@19.2.0)
       lodash.isequal: 4.5.0
       react: 19.2.0
@@ -5985,7 +5985,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@pipedream/sdk@2.3.0': {}
+  '@pipedream/sdk@2.3.2': {}
 
   '@radix-ui/number@1.1.1': {}
 
