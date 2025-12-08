@@ -134,8 +134,31 @@ const plugins = [
     : []),
 ];
 
+// Build trusted origins list for Better Auth
+function getTrustedOrigins(): string[] {
+  const origins: string[] = ["http://localhost:3000"];
+
+  // Add Vercel URL if available
+  if (process.env.VERCEL_URL) {
+    origins.push(`https://${process.env.VERCEL_URL}`);
+  }
+
+  // Add explicit base URL if set
+  if (process.env.BETTER_AUTH_URL) {
+    origins.push(process.env.BETTER_AUTH_URL);
+  }
+
+  // Add production URL if set
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    origins.push(process.env.NEXT_PUBLIC_APP_URL);
+  }
+
+  return origins;
+}
+
 export const auth = betterAuth({
   baseURL: getBaseURL(),
+  trustedOrigins: getTrustedOrigins(),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,

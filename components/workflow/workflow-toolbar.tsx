@@ -1408,7 +1408,7 @@ function WorkflowDialogsComponent({
                 encounter any issues, please{" "}
                 <a
                   className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
-                  href="https://github.com/vercel-labs/workflow-builder-template/issues"
+                  href="https://github.com/PipedreamHQ/workflow-builder-connect/issues"
                   rel="noopener noreferrer"
                   target="_blank"
                 >

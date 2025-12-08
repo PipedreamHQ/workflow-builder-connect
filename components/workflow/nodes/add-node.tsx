@@ -43,7 +43,7 @@ export function AddNode({ data }: NodeProps & { data?: AddNodeData }) {
           >
             AI Gateway
           </a>{" "}
-          and{" "}
+          ,{" "}
           <a
             className="underline underline-offset-2 transition duration-200 ease-out hover:text-foreground"
             href="https://ai-sdk.dev/elements"
@@ -51,6 +51,15 @@ export function AddNode({ data }: NodeProps & { data?: AddNodeData }) {
             target="_blank"
           >
             AI Elements
+          </a>,{" "}
+          and{" "}
+          <a
+            className="underline underline-offset-2 transition duration-200 ease-out hover:text-foreground"
+            href="https://pipedream.com/connect"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Pipedream Connect
           </a>
         </p>
       </div>

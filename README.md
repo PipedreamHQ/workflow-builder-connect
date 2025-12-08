@@ -8,7 +8,7 @@ This project shows how to extend the [AI Workflow Builder Template](https://gith
 
 You can deploy your own version of the workflow builder to Vercel with one click:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.new/workflow-builder)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FPipedreamHQ%2Fworkflow-builder-connect)
 
 **What happens during deployment:**
 

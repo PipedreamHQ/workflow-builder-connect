@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { GitHubStarsProvider } from "@/components/github-stars-provider";
 
-const GITHUB_REPO = "vercel-labs/workflow-builder-template";
+const GITHUB_REPO = "PipedreamHQ/workflow-builder-connect";
 
 async function getGitHubStars(): Promise<number | null> {
   try {
