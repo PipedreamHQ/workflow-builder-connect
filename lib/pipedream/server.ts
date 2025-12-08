@@ -10,7 +10,7 @@ const {
   PIPEDREAM_CLIENT_ID,
   PIPEDREAM_CLIENT_SECRET,
   PIPEDREAM_PROJECT_ID,
-  PIPEDREAM_PROJECT_ENVIRONMENT,
+  PIPEDREAM_ENVIRONMENT,
   PIPEDREAM_ALLOWED_ORIGINS,
 } = process.env;
 
@@ -20,7 +20,7 @@ const isPipedreamConfigured =
 
 // Map environment string to project environment
 const getProjectEnvironment = (): ProjectEnvironment => {
-  if (PIPEDREAM_PROJECT_ENVIRONMENT === "production") {
+  if (PIPEDREAM_ENVIRONMENT === "production") {
     return ProjectEnvironment.Production;
   }
   return ProjectEnvironment.Development;

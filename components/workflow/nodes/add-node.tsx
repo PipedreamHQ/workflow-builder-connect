@@ -51,8 +51,8 @@ export function AddNode({ data }: NodeProps & { data?: AddNodeData }) {
             target="_blank"
           >
             AI Elements
-          </a>,{" "}
-          and{" "}
+          </a>
+          , and{" "}
           <a
             className="underline underline-offset-2 transition duration-200 ease-out hover:text-foreground"
             href="https://pipedream.com/connect"

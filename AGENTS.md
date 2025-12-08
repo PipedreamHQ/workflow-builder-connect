@@ -88,7 +88,7 @@ Required for Pipedream functionality:
 - `PIPEDREAM_CLIENT_ID` - OAuth client ID from pipedream.com/settings/api
 - `PIPEDREAM_CLIENT_SECRET` - OAuth client secret
 - `PIPEDREAM_PROJECT_ID` - Project ID (proj_xxxxxxx) from pipedream.com/projects
-- `PIPEDREAM_PROJECT_ENVIRONMENT` - `development` or `production`
+- `PIPEDREAM_ENVIRONMENT` - `development` or `production`
 - `PIPEDREAM_ALLOWED_ORIGINS` - JSON array of allowed origins (optional if deploying to Vercel)
 
 ### Architecture
