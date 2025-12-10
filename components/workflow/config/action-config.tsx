@@ -306,12 +306,6 @@ export function ActionConfig({
                   <span>System</span>
                 </div>
               </SelectItem>
-              <SelectItem value="Pipedream">
-                <div className="flex items-center gap-2">
-                  <IntegrationIcon className="size-4" integration="pipedream" />
-                  <span>Pipedream</span>
-                </div>
-              </SelectItem>
               {integrations.map((integration) => (
                 <SelectItem key={integration.type} value={integration.label}>
                   <div className="flex items-center gap-2">

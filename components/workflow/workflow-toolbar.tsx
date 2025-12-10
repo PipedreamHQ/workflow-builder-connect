@@ -83,7 +83,11 @@ import {
   type WorkflowEdge,
   type WorkflowNode,
 } from "@/lib/workflow-store";
-import { findActionById, getIntegrationLabels } from "@/plugins";
+import {
+  findActionById,
+  getIntegration,
+  getIntegrationLabels,
+} from "@/plugins";
 import { Panel } from "../ai-elements/panel";
 import { DeployButton } from "../deploy-button";
 import { GitHubStarsButton } from "../github-stars-button";
@@ -130,6 +134,7 @@ const BUILTIN_INTEGRATION_LABELS: Record<string, string> = {
 // Get missing integrations for workflow nodes
 // Uses the plugin registry to determine which integrations are required
 // Also handles built-in actions that aren't in the plugin registry
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Integration check requires multiple conditions
 function getMissingIntegrations(
   nodes: WorkflowNode[],
   userIntegrations: Array<{ type: IntegrationType }>
@@ -156,6 +161,14 @@ function getMissingIntegrations(
       action?.integration || BUILTIN_ACTION_INTEGRATIONS[actionType];
 
     if (!requiredIntegrationType) {
+      continue;
+    }
+
+    // Check if this integration requires per-user credentials
+    // Integrations with empty formFields (like Pipedream) use env vars instead
+    const integration = getIntegration(requiredIntegrationType);
+    if (integration && integration.formFields.length === 0) {
+      // This integration uses environment variables, not per-user credentials
       continue;
     }
 

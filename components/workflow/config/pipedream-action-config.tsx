@@ -17,9 +17,9 @@ import type {
 import { Loader2, Play } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { usePipedreamUserId } from "@/components/pipedream/use-pipedream-user-id";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useSession } from "@/lib/auth-client";
 import { runPipedreamAction } from "@/lib/pipedream/server";
 
 // Sort apps by featured weight descending (most popular first)
@@ -106,8 +106,9 @@ export function PipedreamActionConfig({
   onUpdateDescription,
   disabled,
 }: PipedreamActionConfigProps) {
-  const { data: session } = useSession();
-  const externalUserId = session?.user?.id || "anonymous";
+  // Use shared hook for consistent externalUserId with PipedreamProvider
+  // This ensures accounts connected via the frontend SDK can be used when running actions
+  const externalUserId = usePipedreamUserId();
 
   // Selected app state
   const [selectedApp, setSelectedApp] = useState<App | undefined>(() => {
@@ -282,16 +283,30 @@ export function PipedreamActionConfig({
 
     setIsTesting(true);
     try {
+      // Serialize configuredProps to break any Proxy wrappers from the Pipedream SDK
+      // This ensures the data can be serialized across the server/client boundary
+      const serializedProps = serializeProps(
+        configuredProps,
+        serializedPropNames
+      );
+
+      console.log("[Pipedream Test] Running with props:", {
+        componentKey: selectedComponent.key,
+        externalUserId,
+        propsKeys: Object.keys(serializedProps),
+      });
+
       const result = await runPipedreamAction({
         externalUserId,
         componentKey: selectedComponent.key,
-        configuredProps,
+        configuredProps: serializedProps,
       });
       toast.success("Test successful!", {
         description: "Action executed successfully",
       });
       console.log("Pipedream action result:", result);
     } catch (error) {
+      console.error("[Pipedream Test] Error:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       toast.error("Test failed", {
         description: message,
@@ -299,7 +314,12 @@ export function PipedreamActionConfig({
     } finally {
       setIsTesting(false);
     }
-  }, [selectedComponent?.key, configuredProps, externalUserId]);
+  }, [
+    selectedComponent?.key,
+    configuredProps,
+    externalUserId,
+    serializedPropNames,
+  ]);
 
   // Persist configured props when they change (one-way sync to store)
   useEffect(() => {

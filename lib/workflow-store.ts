@@ -311,6 +311,49 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Update a single config key-value pair, merging with the CURRENT config from the atom
+// This avoids stale closure issues when multiple config updates happen in rapid succession
+export const updateNodeConfigAtom = atom(
+  null,
+  (
+    get,
+    set,
+    {
+      id,
+      key,
+      value,
+      clearIntegrationId,
+    }: { id: string; key: string; value: string; clearIntegrationId?: boolean }
+  ) => {
+    const currentNodes = get(nodesAtom);
+    const node = currentNodes.find((n) => n.id === id);
+    if (!node) {
+      return;
+    }
+
+    // Build new config by merging with the CURRENT config from the atom (not stale closure)
+    let newConfig = { ...node.data.config, [key]: value };
+
+    // When action type changes, clear the integrationId since it may not be valid for the new action
+    if (clearIntegrationId && node.data.config?.integrationId) {
+      newConfig = { ...newConfig, integrationId: undefined };
+    }
+
+    const newNodes = currentNodes.map((n) => {
+      if (n.id === id) {
+        return { ...n, data: { ...n.data, config: newConfig } };
+      }
+      return n;
+    });
+
+    set(nodesAtom, newNodes);
+
+    // Mark as having unsaved changes and trigger autosave
+    set(hasUnsavedChangesAtom, true);
+    set(autosaveAtom);
+  }
+);
+
 export const deleteNodeAtom = atom(null, (get, set, nodeId: string) => {
   const currentNodes = get(nodesAtom);
 

@@ -239,12 +239,10 @@ async function executeActionStep(input: {
       "@/plugins/pipedream/steps/pipedream-action/step"
     );
     return await pipedreamActionStep({
-      ...(stepInput as {
-        pipedreamComponentKey: string;
-        pipedreamConfiguredProps: string | Record<string, unknown>;
-      }),
+      ...stepInput,
       externalUserId: input.externalUserId,
-    });
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic step input type
+    } as any);
   }
 
   // Fallback for unknown action types

@@ -85,11 +85,27 @@ export async function runPipedreamAction(opts: {
     throw new Error("Pipedream is not configured.");
   }
 
-  return await client.actions.run({
-    id: opts.componentKey,
+  console.log("[Pipedream] Running action:", {
+    componentKey: opts.componentKey,
     externalUserId: opts.externalUserId,
-    configuredProps: opts.configuredProps,
+    configuredPropsKeys: Object.keys(opts.configuredProps || {}),
   });
+
+  try {
+    const result = await client.actions.run({
+      id: opts.componentKey,
+      externalUserId: opts.externalUserId,
+      configuredProps: opts.configuredProps,
+    });
+    console.log("[Pipedream] Action succeeded:", result);
+    return result;
+  } catch (error) {
+    console.error("[Pipedream] Action failed:", error);
+    // Re-throw with a serializable error message for server action boundary
+    const message =
+      error instanceof Error ? error.message : "Unknown Pipedream error";
+    throw new Error(message);
+  }
 }
 
 /**
