@@ -27,6 +27,7 @@ type ActionConfigProps = {
   onUpdateLabel?: (label: string) => void;
   onUpdateDescription?: (description: string) => void;
   disabled: boolean;
+  nodeId?: string;
 };
 
 // Database Query fields component
@@ -245,6 +246,7 @@ export function ActionConfig({
   onUpdateLabel,
   onUpdateDescription,
   disabled,
+  nodeId,
 }: ActionConfigProps) {
   const actionType = (config?.actionType as string) || "";
   const categories = useCategoryData();
@@ -375,6 +377,8 @@ export function ActionConfig({
         <PipedreamActionConfig
           config={config}
           disabled={disabled}
+          key={nodeId}
+          nodeId={nodeId}
           onUpdateConfig={onUpdateConfig}
           onUpdateDescription={onUpdateDescription}
           onUpdateLabel={onUpdateLabel}

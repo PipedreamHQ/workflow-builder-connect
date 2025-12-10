@@ -675,6 +675,7 @@ export const PanelInner = () => {
               <TriggerConfig
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
+                key={selectedNode.id}
                 onUpdateConfig={handleUpdateConfig}
                 workflowId={currentWorkflowId ?? undefined}
               />
@@ -711,6 +712,8 @@ export const PanelInner = () => {
               <ActionConfig
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
+                key={selectedNode.id}
+                nodeId={selectedNode.id}
                 onUpdateConfig={handleUpdateConfig}
                 onUpdateDescription={handleUpdateDescription}
                 onUpdateLabel={handleUpdateLabel}

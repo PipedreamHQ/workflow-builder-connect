@@ -482,7 +482,10 @@
   color: var(--muted-foreground) !important;
 }
 
-/* Pipedream connect-react: lighten optional props text */
+/* Pipedream connect-react: style optional props buttons */
 .pipedream-config .pd-optionalfieldbutton {
-  color: var(--muted-foreground) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.25rem 0.5rem !important;
 }
