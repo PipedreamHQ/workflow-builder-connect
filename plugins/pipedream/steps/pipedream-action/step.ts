@@ -8,7 +8,7 @@
 import "server-only";
 
 import { runPipedreamAction } from "@/lib/pipedream/server";
-import { getErrorMessage } from "../utils";
+import { getErrorMessage } from "@/lib/utils";
 
 type PipedreamActionResult =
   | { success: true; data: unknown }

@@ -57,6 +57,7 @@ const INTEGRATION_LABELS: Record<IntegrationType, string> = {
   "ai-gateway": "AI Gateway",
   firecrawl: "Firecrawl",
   v0: "v0",
+  pipedream: "Pipedream",
 };
 
 export function IntegrationFormDialog({
