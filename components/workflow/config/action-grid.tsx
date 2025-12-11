@@ -144,16 +144,25 @@ export function ActionGrid({
 
   // Check Pipedream enabled status
   useEffect(() => {
+    let mounted = true;
     async function checkStatus() {
       try {
         const response = await fetch("/api/pipedream/status");
         const data = await response.json();
-        setPipedreamStatus(data.enabled ? "enabled" : "disabled");
-      } catch {
-        setPipedreamStatus("disabled");
+        if (mounted) {
+          setPipedreamStatus(data.enabled ? "enabled" : "disabled");
+        }
+      } catch (error) {
+        console.error("Failed to check Pipedream status:", error);
+        if (mounted) {
+          setPipedreamStatus("disabled");
+        }
       }
     }
     checkStatus();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Debounce the filter for Pipedream API search
