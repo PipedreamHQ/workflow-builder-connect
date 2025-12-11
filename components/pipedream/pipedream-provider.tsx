@@ -3,12 +3,42 @@
 import {
   CustomizeProvider,
   FrontendClientProvider,
+  useApps,
 } from "@pipedream/connect-react";
 import { createFrontendClient } from "@pipedream/sdk/browser";
-import { type ReactNode, useCallback, useMemo } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { serverConnectTokenCreate } from "@/lib/pipedream/server";
 import { cn } from "@/lib/utils";
 import { usePipedreamUserId } from "./use-pipedream-user-id";
+
+// Prefetcher component that warms the react-query cache
+// Must be inside FrontendClientProvider to access the query context
+// Uses useEffect to avoid SSR hydration mismatches
+function AppsPrefetcher({ children }: { children: ReactNode }) {
+  const [shouldPrefetch, setShouldPrefetch] = useState(false);
+
+  // Only prefetch on client after hydration
+  useEffect(() => {
+    setShouldPrefetch(true);
+  }, []);
+
+  return (
+    <>
+      {shouldPrefetch && <AppsPrefetchTrigger />}
+      {children}
+    </>
+  );
+}
+
+// Separate component to trigger the prefetch
+function AppsPrefetchTrigger() {
+  useApps({
+    sortKey: "featured_weight",
+    sortDirection: "desc",
+    hasActions: true,
+  });
+  return null;
+}
 
 // Theme configuration to match shadcn/ui theme
 // Note: CSS variables use oklch() format, so we use var() directly instead of hsl() wrapper
@@ -74,7 +104,8 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
 
   return (
     <FrontendClientProvider client={client}>
-      <CustomizeProvider
+      <AppsPrefetcher>
+        <CustomizeProvider
         classNames={{
           controlSubmit: ({ form }) =>
             cn(
@@ -92,8 +123,9 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
         }}
         theme={pipedreamTheme}
       >
-        {children}
-      </CustomizeProvider>
+          {children}
+        </CustomizeProvider>
+      </AppsPrefetcher>
     </FrontendClientProvider>
   );
 }

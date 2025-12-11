@@ -4,6 +4,7 @@ import {
   ComponentFormContainer,
   SelectApp,
   SelectComponent,
+  useApps,
   useComponents,
 } from "@pipedream/connect-react";
 import type {
@@ -224,6 +225,9 @@ export function PipedreamActionConfig({
     componentType: "action",
   });
   const actionCount = actionsForApp?.length ?? 0;
+
+  // Get loading state for apps list
+  const { isLoading: isLoadingApps } = useApps(appsOptions);
 
   // Build a deterministic list of prop names (base + latest dynamic props)
   const serializedPropNames = useMemo(() => {
@@ -458,8 +462,11 @@ export function PipedreamActionConfig({
     <div className="pipedream-config space-y-4" ref={containerRef}>
       {/* App Selection */}
       <div className="space-y-2">
-        <Label className="ml-1">
+        <Label className="ml-1 flex items-center gap-2">
           Select app <span className="text-muted-foreground">(3,000+)</span>
+          {isLoadingApps && (
+            <Loader2 className="size-3 animate-spin text-muted-foreground" />
+          )}
         </Label>
         <SelectApp
           appsOptions={appsOptions}
