@@ -12,6 +12,7 @@ const {
   PIPEDREAM_PROJECT_ID,
   PIPEDREAM_ENVIRONMENT,
   PIPEDREAM_ALLOWED_ORIGINS,
+  PIPEDREAM_WEBHOOK_URI,
 } = process.env;
 
 // Validate required environment variables
@@ -63,6 +64,7 @@ export async function serverConnectTokenCreate(opts: {
   const response = await client.tokens.create({
     externalUserId: opts.externalUserId,
     allowedOrigins,
+    webhookUri: PIPEDREAM_WEBHOOK_URI,
   });
 
   // Return in the format expected by the frontend SDK's TokenCallback
