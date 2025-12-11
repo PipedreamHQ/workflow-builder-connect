@@ -27,6 +27,7 @@ type ActionConfigProps = {
   onUpdateLabel?: (label: string) => void;
   onUpdateDescription?: (description: string) => void;
   disabled: boolean;
+  nodeId?: string;
 };
 
 // Database Query fields component
@@ -245,6 +246,7 @@ export function ActionConfig({
   onUpdateLabel,
   onUpdateDescription,
   disabled,
+  nodeId,
 }: ActionConfigProps) {
   const actionType = (config?.actionType as string) || "";
   const categories = useCategoryData();
@@ -304,12 +306,6 @@ export function ActionConfig({
                 <div className="flex items-center gap-2">
                   <Settings className="size-4" />
                   <span>System</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="Pipedream">
-                <div className="flex items-center gap-2">
-                  <IntegrationIcon className="size-4" integration="pipedream" />
-                  <span>Pipedream</span>
                 </div>
               </SelectItem>
               {integrations.map((integration) => (
@@ -381,6 +377,8 @@ export function ActionConfig({
         <PipedreamActionConfig
           config={config}
           disabled={disabled}
+          key={nodeId}
+          nodeId={nodeId}
           onUpdateConfig={onUpdateConfig}
           onUpdateDescription={onUpdateDescription}
           onUpdateLabel={onUpdateLabel}

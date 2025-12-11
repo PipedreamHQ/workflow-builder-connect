@@ -464,3 +464,28 @@
   background: oklch(0.35 0 0) !important;
   color: var(--foreground) !important;
 }
+
+/* Pipedream connect-react: lighten input borders */
+.react-select__control {
+  border-color: var(--border) !important;
+}
+
+.pipedream-config input[type="text"],
+.pipedream-config input[type="number"],
+.pipedream-config input[type="password"],
+.pipedream-config textarea {
+  border-color: var(--border) !important;
+}
+
+/* Pipedream connect-react: lighten description text */
+.pipedream-config .pd-description {
+  color: var(--muted-foreground) !important;
+}
+
+/* Pipedream connect-react: style optional props buttons */
+.pipedream-config .pd-optionalfieldbutton {
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.25rem 0.5rem !important;
+}

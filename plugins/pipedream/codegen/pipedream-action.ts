@@ -1,8 +1,8 @@
 /**
  * Code template for Pipedream Action step
- * This is a string template used for code generation - keep as string export
+ * This template is used when exporting workflows to standalone Next.js projects
  */
-export default `import { createBackendClient } from "@pipedream/sdk/server";
+export const pipedreamActionCodegenTemplate = `import { createBackendClient } from "@pipedream/sdk/server";
 
 const client = createBackendClient({
   projectId: process.env.PIPEDREAM_PROJECT_ID!,

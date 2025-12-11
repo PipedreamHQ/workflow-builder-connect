@@ -7,6 +7,23 @@ import "server-only";
 
 import { redactSensitiveData } from "../utils/redact";
 
+/**
+ * Get the base URL for API calls.
+ * Prioritizes: NEXT_PUBLIC_SITE_URL > VERCEL_URL > localhost fallback
+ */
+function getBaseUrl(): string {
+  // Use configured site URL if available
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  // Vercel provides this in production
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Fallback for local development
+  return "http://localhost:3000";
+}
+
 export type StepContext = {
   executionId?: string;
   nodeId: string;
@@ -41,23 +58,20 @@ async function logStepStart(
   try {
     const redactedInput = redactSensitiveData(input);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/workflow-log`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "start",
-          data: {
-            executionId: context.executionId,
-            nodeId: context.nodeId,
-            nodeName: context.nodeName,
-            nodeType: context.nodeType,
-            input: redactedInput,
-          },
-        }),
-      }
-    );
+    const response = await fetch(`${getBaseUrl()}/api/workflow-log`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "start",
+        data: {
+          executionId: context.executionId,
+          nodeId: context.nodeId,
+          nodeName: context.nodeName,
+          nodeType: context.nodeType,
+          input: redactedInput,
+        },
+      }),
+    });
 
     if (response.ok) {
       const result = await response.json();
@@ -90,7 +104,7 @@ async function logStepComplete(
   try {
     const redactedOutput = redactSensitiveData(output);
 
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/workflow-log`, {
+    await fetch(`${getBaseUrl()}/api/workflow-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -131,7 +145,7 @@ export async function logWorkflowComplete(options: {
   try {
     const redactedOutput = redactSensitiveData(options.output);
 
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/workflow-log`, {
+    await fetch(`${getBaseUrl()}/api/workflow-log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

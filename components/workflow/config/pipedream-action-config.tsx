@@ -17,10 +17,59 @@ import type {
 import { Loader2, Play } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { usePipedreamUserId } from "@/components/pipedream/use-pipedream-user-id";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useSession } from "@/lib/auth-client";
 import { runPipedreamAction } from "@/lib/pipedream/server";
+
+/**
+ * Custom hook for debounced persistence that handles cleanup properly.
+ * Uses refs to avoid stale closure issues and flushes on unmount.
+ */
+function useDebouncedPersist(
+  persistFn: (props: ConfiguredProps) => void,
+  delay: number
+) {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPropsRef = useRef<ConfiguredProps | null>(null);
+  const persistFnRef = useRef(persistFn);
+
+  // Keep the persist function ref up to date
+  useEffect(() => {
+    persistFnRef.current = persistFn;
+  }, [persistFn]);
+
+  // Cleanup on unmount - flush any pending persist
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (pendingPropsRef.current !== null) {
+        persistFnRef.current(pendingPropsRef.current);
+      }
+    },
+    []
+  );
+
+  const debouncedPersist = useCallback(
+    (props: ConfiguredProps) => {
+      pendingPropsRef.current = props;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        if (pendingPropsRef.current !== null) {
+          persistFnRef.current(pendingPropsRef.current);
+          pendingPropsRef.current = null;
+        }
+      }, delay);
+    },
+    [delay]
+  );
+
+  return debouncedPersist;
+}
 
 // Sort apps by featured weight descending (most popular first)
 const appsOptions: {
@@ -37,6 +86,7 @@ type PipedreamActionConfigProps = {
   onUpdateLabel?: (label: string) => void;
   onUpdateDescription?: (description: string) => void;
   disabled: boolean;
+  nodeId?: string;
 };
 
 /**
@@ -105,9 +155,11 @@ export function PipedreamActionConfig({
   onUpdateLabel,
   onUpdateDescription,
   disabled,
+  nodeId,
 }: PipedreamActionConfigProps) {
-  const { data: session } = useSession();
-  const externalUserId = session?.user?.id || "anonymous";
+  // Use shared hook for consistent externalUserId with PipedreamProvider
+  // This ensures accounts connected via the frontend SDK can be used when running actions
+  const externalUserId = usePipedreamUserId();
 
   // Selected app state
   const [selectedApp, setSelectedApp] = useState<App | undefined>(() => {
@@ -154,6 +206,12 @@ export function PipedreamActionConfig({
   const lastSavedPropsJson = useRef<string>("");
   const lastSavedComponentKey = useRef<string>("");
 
+  // Track initial props to guard against ComponentFormContainer clobbering on mount
+  const initialPropsCountRef = useRef<number>(
+    Object.keys(configuredProps || {}).length
+  );
+  const hasReceivedUserInputRef = useRef(false);
+
   // Test execution state
   const [isTesting, setIsTesting] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -164,7 +222,6 @@ export function PipedreamActionConfig({
     componentType: "action",
   });
   const actionCount = actionsForApp?.length ?? 0;
-  const selectedComponentKey = selectedComponent?.key;
 
   // Build a deterministic list of prop names (base + latest dynamic props)
   const serializedPropNames = useMemo(() => {
@@ -222,6 +279,39 @@ export function PipedreamActionConfig({
       selectedComponent?.key,
       serializedPropNames,
     ]
+  );
+
+  // Debounced persist to reduce lag when typing - uses custom hook for proper cleanup
+  const debouncedPersist = useDebouncedPersist(persistConfiguredProps, 300);
+
+  // Handle props update from ComponentFormContainer
+  const handleConfiguredPropsUpdate = useCallback(
+    (props: ConfiguredProps) => {
+      const incomingCount = Object.keys(props || {}).length;
+
+      // Guard against ComponentFormContainer emitting empty/reduced props on mount
+      // which would clobber our saved props. Only accept if:
+      // 1. We've already received user input (not initial hydration)
+      // 2. OR incoming props have at least as many keys as we started with
+      // 3. OR we had no initial props
+      if (
+        !hasReceivedUserInputRef.current &&
+        initialPropsCountRef.current > 0 &&
+        incomingCount < initialPropsCountRef.current
+      ) {
+        // This is likely the form's initial empty emission - ignore it
+        return;
+      }
+
+      // Mark that we've received real input after this point
+      if (incomingCount >= initialPropsCountRef.current) {
+        hasReceivedUserInputRef.current = true;
+      }
+
+      setConfiguredProps(props);
+      debouncedPersist(props);
+    },
+    [debouncedPersist]
   );
 
   // Handle app selection
@@ -282,16 +372,30 @@ export function PipedreamActionConfig({
 
     setIsTesting(true);
     try {
+      // Serialize configuredProps to break any Proxy wrappers from the Pipedream SDK
+      // This ensures the data can be serialized across the server/client boundary
+      const serializedProps = serializeProps(
+        configuredProps,
+        serializedPropNames
+      );
+
+      console.log("[Pipedream Test] Running with props:", {
+        componentKey: selectedComponent.key,
+        externalUserId,
+        propsKeys: Object.keys(serializedProps),
+      });
+
       const result = await runPipedreamAction({
         externalUserId,
         componentKey: selectedComponent.key,
-        configuredProps,
+        configuredProps: serializedProps,
       });
       toast.success("Test successful!", {
         description: "Action executed successfully",
       });
       console.log("Pipedream action result:", result);
     } catch (error) {
+      console.error("[Pipedream Test] Error:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       toast.error("Test failed", {
         description: message,
@@ -299,15 +403,12 @@ export function PipedreamActionConfig({
     } finally {
       setIsTesting(false);
     }
-  }, [selectedComponent?.key, configuredProps, externalUserId]);
-
-  // Persist configured props when they change (one-way sync to store)
-  useEffect(() => {
-    if (!selectedComponentKey) {
-      return;
-    }
-    persistConfiguredProps(configuredProps || {});
-  }, [configuredProps, persistConfiguredProps, selectedComponentKey]);
+  }, [
+    selectedComponent?.key,
+    configuredProps,
+    externalUserId,
+    serializedPropNames,
+  ]);
 
   // Sync values from config whenever they change (handles node switches and refresh)
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Controlled hydration for Pipedream state
@@ -393,11 +494,8 @@ export function PipedreamActionConfig({
               configuredProps={configuredProps}
               externalUserId={externalUserId}
               hideOptionalProps={false}
-              key={selectedComponent.key}
-              onUpdateConfiguredProps={(props) => {
-                setConfiguredProps(props);
-                persistConfiguredProps(props);
-              }}
+              key={`${nodeId}-${selectedComponent.key}`}
+              onUpdateConfiguredProps={handleConfiguredPropsUpdate}
               onUpdateDynamicProps={setLatestDynamicProps}
             />
           </div>

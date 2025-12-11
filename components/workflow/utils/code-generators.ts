@@ -5,12 +5,12 @@
 import conditionTemplate from "@/lib/codegen-templates/condition";
 import databaseQueryTemplate from "@/lib/codegen-templates/database-query";
 import httpRequestTemplate from "@/lib/codegen-templates/http-request";
-import pipedreamActionTemplate from "@/lib/codegen-templates/pipedream-action";
 import { generateImageCodegenTemplate } from "@/plugins/ai-gateway/codegen/generate-image";
 import { generateTextCodegenTemplate } from "@/plugins/ai-gateway/codegen/generate-text";
 import { scrapeCodegenTemplate } from "@/plugins/firecrawl/codegen/scrape";
 import { searchCodegenTemplate } from "@/plugins/firecrawl/codegen/search";
 import { createTicketCodegenTemplate } from "@/plugins/linear/codegen/create-ticket";
+import { pipedreamActionCodegenTemplate as pipedreamActionTemplate } from "@/plugins/pipedream/codegen/pipedream-action";
 import { sendEmailCodegenTemplate } from "@/plugins/resend/codegen/send-email";
 import { sendSlackMessageCodegenTemplate } from "@/plugins/slack/codegen/send-slack-message";
 import { createChatCodegenTemplate } from "@/plugins/v0/codegen/create-chat";

@@ -44,9 +44,10 @@ import {
   selectedNodeAtom,
   showClearDialogAtom,
   showDeleteDialogAtom,
+  updateNodeConfigAtom,
   updateNodeDataAtom,
 } from "@/lib/workflow-store";
-import { findActionById } from "@/plugins";
+import { findActionById, getIntegration } from "@/plugins";
 import { Panel } from "../ai-elements/panel";
 import { IntegrationsDialog } from "../settings/integrations-dialog";
 import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
@@ -154,6 +155,7 @@ export const PanelInner = () => {
     currentWorkflowNameAtom
   );
   const updateNodeData = useSetAtom(updateNodeDataAtom);
+  const updateNodeConfig = useSetAtom(updateNodeConfigAtom);
   const deleteNode = useSetAtom(deleteNodeAtom);
   const deleteEdge = useSetAtom(deleteEdgeAtom);
   const deleteSelectedItems = useSetAtom(deleteSelectedItemsAtom);
@@ -263,19 +265,16 @@ export const PanelInner = () => {
     }
   };
   const autoSelectIntegration = useCallback(
-    async (
-      nodeId: string,
-      actionType: string,
-      currentConfig: Record<string, unknown>,
-      abortSignal: AbortSignal
-    ) => {
+    async (nodeId: string, actionType: string, abortSignal: AbortSignal) => {
       // Get integration type - check plugin registry first, then system actions
       const action = findActionById(actionType);
       const integrationType: IntegrationType | undefined =
         (action?.integration as IntegrationType | undefined) ||
         SYSTEM_ACTION_INTEGRATIONS[actionType];
 
-      if (!integrationType) {
+      // Skip auto-select for Pipedream actions - they use env vars, not per-user integrations
+      // Also skip if no integration type is found
+      if (!integrationType || integrationType === "pipedream") {
         // No integration needed, remove from pending
         setPendingIntegrationNodes((prev: Set<string>) => {
           const next = new Set(prev);
@@ -297,12 +296,12 @@ export const PanelInner = () => {
 
         // Auto-select if only one integration exists
         if (filtered.length === 1 && !abortSignal.aborted) {
-          const newConfig = {
-            ...currentConfig,
-            actionType,
-            integrationId: filtered[0].id,
-          };
-          updateNodeData({ id: nodeId, data: { config: newConfig } });
+          // Use updateNodeConfig to avoid stale closure issues
+          updateNodeConfig({
+            id: nodeId,
+            key: "integrationId",
+            value: filtered[0].id,
+          });
         }
       } catch (error) {
         console.error("Failed to auto-select integration:", error);
@@ -317,7 +316,7 @@ export const PanelInner = () => {
         }
       }
     },
-    [updateNodeData, setPendingIntegrationNodes]
+    [updateNodeConfig, setPendingIntegrationNodes]
   );
 
   const handleUpdateConfig = useCallback(
@@ -326,14 +325,14 @@ export const PanelInner = () => {
         return;
       }
 
-      let newConfig = { ...selectedNode.data.config, [key]: value };
-
-      // When action type changes, clear the integrationId since it may not be valid for the new action
-      if (key === "actionType" && selectedNode.data.config?.integrationId) {
-        newConfig = { ...newConfig, integrationId: undefined };
-      }
-
-      updateNodeData({ id: selectedNode.id, data: { config: newConfig } });
+      // Use updateNodeConfig which merges with the CURRENT config from the atom
+      // This avoids stale closure issues when multiple updates happen rapidly
+      updateNodeConfig({
+        id: selectedNode.id,
+        key,
+        value,
+        clearIntegrationId: key === "actionType",
+      });
 
       // When action type changes, auto-select integration if only one exists
       if (key === "actionType") {
@@ -352,19 +351,15 @@ export const PanelInner = () => {
         setPendingIntegrationNodes((prev: Set<string>) =>
           new Set(prev).add(selectedNode.id)
         );
-        autoSelectIntegration(
-          selectedNode.id,
-          value,
-          newConfig,
-          newController.signal
-        );
+        // autoSelectIntegration uses updateNodeConfig which gets fresh config from the atom
+        autoSelectIntegration(selectedNode.id, value, newController.signal);
       }
     },
     [
       autoSelectIntegration,
       selectedNode,
       setPendingIntegrationNodes,
-      updateNodeData,
+      updateNodeConfig,
     ]
   );
 
@@ -680,6 +675,7 @@ export const PanelInner = () => {
               <TriggerConfig
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
+                key={selectedNode.id}
                 onUpdateConfig={handleUpdateConfig}
                 workflowId={currentWorkflowId ?? undefined}
               />
@@ -716,6 +712,8 @@ export const PanelInner = () => {
               <ActionConfig
                 config={selectedNode.data.config || {}}
                 disabled={isGenerating}
+                key={selectedNode.id}
+                nodeId={selectedNode.id}
                 onUpdateConfig={handleUpdateConfig}
                 onUpdateDescription={handleUpdateDescription}
                 onUpdateLabel={handleUpdateLabel}
@@ -801,7 +799,15 @@ export const PanelInner = () => {
                   }
                 }
 
-                return integrationType ? (
+                // Check if this integration requires per-user credentials
+                // Integrations with empty formFields (like Pipedream) use env vars instead
+                const integration = integrationType
+                  ? getIntegration(integrationType as IntegrationType)
+                  : undefined;
+                const requiresUserCredentials =
+                  integration && integration.formFields.length > 0;
+
+                return integrationType && requiresUserCredentials ? (
                   <IntegrationSelector
                     integrationType={integrationType as IntegrationType}
                     label="Integration"

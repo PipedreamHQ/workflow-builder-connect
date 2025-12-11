@@ -318,7 +318,8 @@ export type IntegrationType =
   | "database"
   | "ai-gateway"
   | "firecrawl"
-  | "v0";
+  | "v0"
+  | "pipedream";
 
 export type IntegrationConfig = {
   apiKey?: string;
