@@ -21,8 +21,8 @@ importers:
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@pipedream/connect-react':
-        specifier: ^2.4.0
-        version: 2.4.0(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        specifier: ^2.4.1
+        version: 2.4.1(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@pipedream/sdk':
         specifier: ^2.3.2
         version: 2.3.2
@@ -1176,8 +1176,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@pipedream/connect-react@2.4.0':
-    resolution: {integrity: sha512-I9S1uJ0rPw6cklK4M6Zs7CHUjTxLr1f6ndCsigneJB45ald+wMonN+APR8CVpKkQ7cqL+AY5WAHa0w1pYHNHUg==}
+  '@pipedream/connect-react@2.4.1':
+    resolution: {integrity: sha512-baWS6TyP8WBH9GTXmaegkNL+jnwYf1dnyt2STNIva3Gs2ZTWnt4vzXXurBJCIWXxYFVQFZimMIHipodcOeFAFw==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -5973,7 +5973,7 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.14.0':
     optional: true
 
-  '@pipedream/connect-react@2.4.0(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@pipedream/connect-react@2.4.1(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@pipedream/sdk': 2.3.2
       '@tanstack/react-query': 5.90.11(react@19.2.0)

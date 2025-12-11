@@ -1,8 +1,10 @@
 # AI Workflow Builder + Pipedream Connect
 
-This project shows how to extend the [AI Workflow Builder Template](https://github.com/vercel-labs/workflow-builder-template) with [Pipedream Connect](https://pipedream.com/connect) so you can enable **10,000+ actions and triggers from 3,000+ apps**. Built on top of Workflow DevKit, it provides a complete visual workflow builder with real integrations and code generation capabilities. Refer to Pipedream's docs [here](https://pipedream.com/docs/connect).
+**This project shows how to extend the [AI Workflow Builder Template](https://github.com/vercel-labs/workflow-builder-template) with [Pipedream Connect](https://pipedream.com/connect) so you can enable 10,000+ actions and triggers from 3,000+ apps**.
 
-![AI Workflow Builder Screenshot](screenshot.png)
+Built on top of Workflow DevKit, it provides a complete visual workflow builder with real integrations and code generation capabilities. Refer to Pipedream's docs [here](https://pipedream.com/docs/connect).
+
+![AI Workflow Builder Screenshot](screenshot-google-sheets.png)
 
 ## Deploy Your Own
 
@@ -35,7 +37,7 @@ You can deploy your own version of the workflow builder to Vercel with one click
 - Node.js 18+
 - PostgreSQL database
 - pnpm package manager
-- Pipedream Connect credentials (client ID, client secret, project ID). See the prerequisites called out in https://github.com/PipedreamHQ/pipedream/pull/19326 for how to obtain these.
+- Pipedream Connect credentials (client ID, client secret, project ID). See the quickstart guide [here](https://pipedream.com/docs/connect/quickstart) to obtain these
 
 ### Environment Variables
 
@@ -51,6 +53,13 @@ BETTER_AUTH_URL=http://localhost:3000
 
 # AI Gateway (for AI workflow generation)
 AI_GATEWAY_API_KEY=your-openai-api-key
+
+# Pipedream Credentials
+PIPEDREAM_CLIENT_ID=
+PIPEDREAM_CLIENT_SECRET=
+PIPEDREAM_ENVIRONMENT=development # or production
+PIPEDREAM_PROJECT_ID= # proj_xxxxxxx
+PIPEDREAM_ALLOWED_ORIGINS=["http://localhost:3000"]
 ```
 
 ### Installation
@@ -193,6 +202,14 @@ pnpm db:studio    # Open Drizzle Studio
 ```
 
 ## Integrations
+
+### Pipedream Connect
+
+Pipedream Connect is a plug that you, the developer configures, and requires no setup from your end users.
+
+- Learn more at [pipedream.com/docs/connect](https://pipedream.com/docs/connect)
+- This implementation uses Pipedream's frontend React library, [`connect-react`](https://www.npmjs.com/package/@pipedream/connect-react)
+- Reach out to [Pipedream](mailto:connect@pipedream.com) for any questions about implementing Connect
 
 ### Resend (Email)
 
