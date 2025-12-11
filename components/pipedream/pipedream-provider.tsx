@@ -5,7 +5,7 @@ import {
   FrontendClientProvider,
 } from "@pipedream/connect-react";
 import { createFrontendClient } from "@pipedream/sdk/browser";
-import { type ReactNode, useCallback, useEffect, useMemo } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { serverConnectTokenCreate } from "@/lib/pipedream/server";
 import { cn } from "@/lib/utils";
 import { usePipedreamUserId } from "./use-pipedream-user-id";
@@ -51,13 +51,6 @@ type PipedreamProviderProps = {
 export function PipedreamProvider({ children }: PipedreamProviderProps) {
   // Use shared hook for consistent externalUserId across provider and action config
   const externalUserId = usePipedreamUserId();
-
-  // Log the external user ID for debugging
-  useEffect(() => {
-    if (externalUserId && externalUserId !== "anonymous") {
-      console.log("[Pipedream] External User ID:", externalUserId);
-    }
-  }, [externalUserId]);
 
   // Token callback that calls our server action
   const tokenCallback = useCallback(
