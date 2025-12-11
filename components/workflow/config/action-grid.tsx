@@ -177,11 +177,13 @@ export function ActionGrid({
 
   // Search Pipedream apps - sorted by featured_weight descending (most popular first)
   // Only fetch if Pipedream is enabled (pass undefined to disable the hook)
+  // Filter to only apps with actions since this is an action grid
   const pipedreamAppsOptions = isPipedreamEnabled
     ? {
         ...(debouncedFilter.length >= 2 && { q: debouncedFilter }),
         sortKey: "featured_weight" as const,
         sortDirection: "desc" as const,
+        hasActions: true,
       }
     : undefined;
 

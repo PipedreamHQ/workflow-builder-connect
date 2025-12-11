@@ -71,13 +71,15 @@ function useDebouncedPersist(
   return debouncedPersist;
 }
 
-// Sort apps by featured weight descending (most popular first)
+// Sort apps by featured weight descending (most popular first), only show apps with actions
 const appsOptions: {
   sortKey: AppsListRequestSortKey;
   sortDirection: AppsListRequestSortDirection;
+  hasActions: boolean;
 } = {
   sortKey: "featured_weight",
   sortDirection: "desc",
+  hasActions: true,
 };
 
 type PipedreamActionConfigProps = {

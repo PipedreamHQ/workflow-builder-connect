@@ -23,7 +23,7 @@
     "@mendable/firecrawl-js": "^4.6.2",
     "@monaco-editor/react": "^4.7.0",
     "@pipedream/connect-react": "^2.4.1",
-    "@pipedream/sdk": "^2.3.2",
+    "@pipedream/sdk": "^2.3.4",
     "@radix-ui/react-context-menu": "^2.2.16",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-switch": "^1.2.6",
