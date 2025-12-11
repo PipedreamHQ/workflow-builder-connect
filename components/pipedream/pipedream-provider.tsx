@@ -10,31 +10,35 @@ import { serverConnectTokenCreate } from "@/lib/pipedream/server";
 import { cn } from "@/lib/utils";
 import { usePipedreamUserId } from "./use-pipedream-user-id";
 
-// Theme configuration to match shadcn/ui dark theme
+// Theme configuration to match shadcn/ui theme
+// Note: CSS variables use oklch() format, so we use var() directly instead of hsl() wrapper
 const pipedreamTheme = {
   colors: {
     // Background colors
-    neutral0: "hsl(var(--background))",
-    neutral5: "hsl(var(--muted))",
-    neutral10: "hsl(var(--muted))",
-    // Border colors
-    neutral20: "hsl(var(--border))",
-    neutral30: "hsl(var(--border))",
-    // Text colors
-    neutral40: "hsl(var(--muted-foreground))",
-    neutral50: "hsl(var(--muted-foreground))",
-    neutral60: "hsl(var(--foreground) / 0.6)",
-    neutral70: "hsl(var(--foreground) / 0.7)",
-    neutral80: "hsl(var(--foreground) / 0.8)",
-    neutral90: "hsl(var(--foreground))",
+    neutral0: "var(--background)",
+    neutral5: "var(--muted)",
+    neutral10: "var(--muted)",
+    // neutral20 is used for input backgrounds in connect-react
+    // CSS handles border colors separately with !important
+    neutral20: "var(--background)",
+    neutral30: "var(--border)",
+    // Text colors - using foreground for better contrast in inputs
+    neutral40: "var(--muted-foreground)",
+    neutral50: "var(--muted-foreground)",
+    neutral60: "color-mix(in oklch, var(--foreground) 70%, transparent)",
+    neutral70: "color-mix(in oklch, var(--foreground) 80%, transparent)",
+    neutral80: "var(--foreground)",
+    neutral90: "var(--foreground)",
     // Primary/accent colors
-    primary: "hsl(var(--primary))",
-    primary75: "hsl(var(--primary) / 0.75)",
-    primary50: "hsl(var(--primary) / 0.5)",
-    primary25: "hsl(var(--primary) / 0.25)",
+    primary: "var(--primary)",
+    primary75: "color-mix(in oklch, var(--primary) 75%, transparent)",
+    primary50: "color-mix(in oklch, var(--primary) 50%, transparent)",
+    primary25: "color-mix(in oklch, var(--primary) 25%, transparent)",
     // Danger colors
-    danger: "hsl(var(--destructive))",
-    dangerLight: "hsl(var(--destructive) / 0.3)",
+    danger: "var(--destructive)",
+    dangerLight: "color-mix(in oklch, var(--destructive) 30%, transparent)",
+    // App icon background - white/light for visibility in dark mode
+    appIconBackground: "oklch(1 0 0)",
   },
   borderRadius: 6,
   spacing: {
@@ -81,9 +85,9 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
         }}
         styles={{
           controlSubmit: {
-            backgroundColor: "hsl(var(--primary))",
-            color: "hsl(var(--primary-foreground))",
-            borderColor: "hsl(var(--primary))",
+            backgroundColor: "var(--primary)",
+            color: "var(--primary-foreground)",
+            borderColor: "var(--primary)",
           },
         }}
         theme={pipedreamTheme}
