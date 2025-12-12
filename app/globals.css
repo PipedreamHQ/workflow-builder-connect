@@ -364,6 +364,9 @@
 /* Style the menu portal - only set z-index, let react-select handle positioning */
 .react-select__menu-portal {
   z-index: 99999 !important;
+  /* Ensure touch events work on mobile */
+  touch-action: auto !important;
+  pointer-events: auto !important;
 }
 
 .react-select__menu-portal .react-select__menu {
@@ -375,6 +378,9 @@
 .react-select__menu-portal .react-select__option {
   background: var(--card) !important;
   color: var(--foreground) !important;
+  /* Ensure touch events work on mobile */
+  touch-action: manipulation !important;
+  cursor: pointer !important;
 }
 
 .react-select__menu-portal .react-select__option:hover,

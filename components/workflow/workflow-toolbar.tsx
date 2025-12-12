@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { api, type IntegrationType } from "@/lib/api-client";
 import { useSession } from "@/lib/auth-client";
 import { integrationsAtom } from "@/lib/integrations-store";
@@ -892,8 +892,10 @@ function ToolbarActions({
       </ButtonGroup>
 
       {/* Properties Sheet - Mobile Only */}
-      <Sheet onOpenChange={setShowPropertiesSheet} open={showPropertiesSheet}>
+      {/* modal={false} allows interactions with portaled react-select menus */}
+      <Sheet modal={false} onOpenChange={setShowPropertiesSheet} open={showPropertiesSheet}>
         <SheetContent className="w-full p-0 sm:max-w-full" side="bottom">
+          <SheetTitle className="sr-only">Node Properties</SheetTitle>
           <div className="h-[80vh]">
             <PanelInner />
           </div>
