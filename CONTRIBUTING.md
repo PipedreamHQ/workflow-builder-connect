@@ -1,6 +1,8 @@
-# Contributing to Workflow Builder
+# Contributing to Workflow Builder + Pipedream Connect
 
-Thank you for your interest in contributing to the Workflow Builder project! We're excited to have you here and appreciate your help in making this platform better for everyone.
+Thank you for your interest in contributing to the Workflow Builder + Pipedream Connect project! This project extends the [AI Workflow Builder Template](https://github.com/vercel-labs/workflow-builder-template) with [Pipedream Connect](https://pipedream.com/connect), enabling 10,000+ actions and triggers from 3,000+ apps.
+
+We're excited to have you here and appreciate your help in making this platform better for everyone.
 
 ## Table of Contents
 
@@ -30,8 +32,8 @@ There are many ways to contribute to Workflow Builder:
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/your-username/workflow-builder-template.git
-   cd workflow-builder-template
+   git clone https://github.com/your-username/workflow-builder-connect.git
+   cd workflow-builder-connect
    ```
 3. **Install dependencies**:
    ```bash
@@ -67,32 +69,29 @@ We're committed to providing a welcoming and inclusive environment for all contr
 Required variables for development:
 
 ```bash
+# Config
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+INTEGRATION_ENCRYPTION_KEY=  # Generate with: openssl rand -hex 32
+
 # Database
-DATABASE_URL=postgres://localhost:5432/workflow
+DATABASE_URL=postgresql://user:password@localhost:5432/workflow_builder
 
-# Authentication
-BETTER_AUTH_SECRET=your-auth-secret-here  # Generate with: openssl rand -base64 32
+# Better Auth
+BETTER_AUTH_SECRET=  # Generate with: openssl rand -hex 32
+BETTER_AUTH_URL=http://localhost:3000
 
-# Credentials Encryption
-INTEGRATION_ENCRYPTION_KEY=your-64-character-hex-string  # Generate with: openssl rand -hex 32
+# AI Gateway (for AI workflow generation)
+AI_GATEWAY_API_KEY=your-openai-api-key
 
-# App URLs
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Pipedream Credentials (required for Pipedream Connect integrations)
+PIPEDREAM_CLIENT_ID=
+PIPEDREAM_CLIENT_SECRET=
+PIPEDREAM_ENVIRONMENT=development  # or production
+PIPEDREAM_PROJECT_ID=  # proj_xxxxxxx
+PIPEDREAM_ALLOWED_ORIGINS=["http://localhost:3000"]
 ```
 
-Optional OAuth providers (configure at least one for authentication):
-
-```bash
-# GitHub
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-NEXT_PUBLIC_GITHUB_CLIENT_ID=
-
-# Google
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=
-```
+Get your Pipedream credentials from [pipedream.com](https://pipedream.com). See the [Connect quickstart guide](https://pipedream.com/docs/connect/quickstart) for setup instructions.
 
 See `.env.example` for the complete list of available environment variables.
 
@@ -127,11 +126,11 @@ See `.env.example` for the complete list of available environment variables.
 
 ### Before Submitting
 
-- ✅ All tests pass
-- ✅ Code follows the project's style guidelines (`pnpm fix`)
-- ✅ TypeScript compiles without errors (`pnpm type-check`)
-- ✅ Your changes are well-documented
-- ✅ You've tested your changes thoroughly
+- All tests pass
+- Code follows the project's style guidelines (`pnpm fix`)
+- TypeScript compiles without errors (`pnpm type-check`)
+- Your changes are well-documented
+- You've tested your changes thoroughly
 
 ### PR Guidelines
 
@@ -844,7 +843,8 @@ If you run into issues:
 3. Ensure all file names match your imports
 4. Run `pnpm type-check` to catch type errors
 5. Run `pnpm fix` to auto-fix linting issues
-6. Open an issue on GitHub or start a discussion
+6. Open an issue on [GitHub](https://github.com/PipedreamHQ/workflow-builder-connect/issues)
+7. For Pipedream Connect questions, reach out to [connect@pipedream.com](mailto:connect@pipedream.com)
 
 ---
 
@@ -857,14 +857,14 @@ If you run into issues:
 3. Run migration
 4. Test thoroughly
 
-Each integration is self-contained in one organized directory, making it easy to develop, test, and maintain. Happy building! 🚀
+Each integration is self-contained in one organized directory, making it easy to develop, test, and maintain.
 
 ---
 
 ## Questions?
 
-- **GitHub Issues**: For bug reports and feature requests
-- **GitHub Discussions**: For questions and community support
+- **GitHub Issues**: For [bug reports and feature requests](https://github.com/PipedreamHQ/workflow-builder-connect/issues)
+- **Pipedream Connect**: Reach out to [connect@pipedream.com](mailto:connect@pipedream.com) for questions about Pipedream integration
 - **Pull Requests**: For code contributions
 
-Thank you for contributing to Workflow Builder! Your efforts help make this platform better for everyone. 💙
+Thank you for contributing to Workflow Builder + Pipedream Connect! Your efforts help make this platform better for everyone.

@@ -6,7 +6,13 @@ import {
   useApps,
 } from "@pipedream/connect-react";
 import { createFrontendClient } from "@pipedream/sdk/browser";
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { serverConnectTokenCreate } from "@/lib/pipedream/server";
 import { cn } from "@/lib/utils";
 import { usePipedreamUserId } from "./use-pipedream-user-id";
@@ -106,23 +112,23 @@ export function PipedreamProvider({ children }: PipedreamProviderProps) {
     <FrontendClientProvider client={client}>
       <AppsPrefetcher>
         <CustomizeProvider
-        classNames={{
-          controlSubmit: ({ form }) =>
-            cn(
-              "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm shadow transition-colors hover:bg-primary/90",
-              form?.submitting &&
-                "cursor-not-allowed opacity-70 hover:bg-primary"
-            ),
-        }}
-        styles={{
-          controlSubmit: {
-            backgroundColor: "var(--primary)",
-            color: "var(--primary-foreground)",
-            borderColor: "var(--primary)",
-          },
-        }}
-        theme={pipedreamTheme}
-      >
+          classNames={{
+            controlSubmit: ({ form }) =>
+              cn(
+                "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm shadow transition-colors hover:bg-primary/90",
+                form?.submitting &&
+                  "cursor-not-allowed opacity-70 hover:bg-primary"
+              ),
+          }}
+          styles={{
+            controlSubmit: {
+              backgroundColor: "var(--primary)",
+              color: "var(--primary-foreground)",
+              borderColor: "var(--primary)",
+            },
+          }}
+          theme={pipedreamTheme}
+        >
           {children}
         </CustomizeProvider>
       </AppsPrefetcher>

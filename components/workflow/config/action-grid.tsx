@@ -301,12 +301,14 @@ export function ActionGrid({
             {/* Pipedream apps (if enabled) */}
             {isPipedreamEnabled && pipedreamApps.map(renderPipedreamAppButton)}
             {/* Loading placeholder while Pipedream apps load */}
-            {isPipedreamEnabled && isPipedreamLoading && !hasPipedreamResults && (
-              <div className="col-span-2 flex items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/30 p-4 text-muted-foreground text-sm">
-                <Loader2 className="size-4 animate-spin" />
-                Loading apps...
-              </div>
-            )}
+            {isPipedreamEnabled &&
+              isPipedreamLoading &&
+              !hasPipedreamResults && (
+                <div className="col-span-2 flex items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/30 p-4 text-muted-foreground text-sm">
+                  <Loader2 className="size-4 animate-spin" />
+                  Loading apps...
+                </div>
+              )}
           </div>
         )}
 

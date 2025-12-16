@@ -893,7 +893,11 @@ function ToolbarActions({
 
       {/* Properties Sheet - Mobile Only */}
       {/* modal={false} allows interactions with portaled react-select menus */}
-      <Sheet modal={false} onOpenChange={setShowPropertiesSheet} open={showPropertiesSheet}>
+      <Sheet
+        modal={false}
+        onOpenChange={setShowPropertiesSheet}
+        open={showPropertiesSheet}
+      >
         <SheetContent className="w-full p-0 sm:max-w-full" side="bottom">
           <SheetTitle className="sr-only">Node Properties</SheetTitle>
           <div className="h-[80vh]">

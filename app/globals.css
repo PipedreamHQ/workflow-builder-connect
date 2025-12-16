@@ -520,7 +520,9 @@
   font-weight: 500 !important;
   font-size: 0.875rem !important;
   cursor: pointer !important;
-  transition: background-color 0.15s ease, opacity 0.15s ease !important;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease !important;
 }
 
 .pipedream-config .pd-connectbutton:hover {
